@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --burgundy: #800020;
+  --burgundy-deep: #4D0013;
+  --gold: #FFD700;
+  --gold-deep: #D6B500;
+  --offwhite: #FDFFFC;
+  --pearl: #F8F5EE;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--offwhite);
+  color: #1A0006;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection */
+::selection { background: var(--gold); color: var(--burgundy); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--pearl); }
+::-webkit-scrollbar-thumb { background: var(--burgundy); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--burgundy-deep); }
+
+/* Wordmark sparkle decoration helper */
+.sparkle::after {
+  content: '✦';
+  display: inline-block;
+  font-size: 0.45em;
+  vertical-align: super;
+  color: var(--gold);
+  margin-left: 0.05em;
+}
+
+/* Reveal animation */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal { opacity: 0; animation: rise 0.9s cubic-bezier(.2,.7,.2,1) forwards; }
+.d-1 { animation-delay: 0.1s; }
+.d-2 { animation-delay: 0.25s; }
+.d-3 { animation-delay: 0.4s; }
+.d-4 { animation-delay: 0.55s; }
+.d-5 { animation-delay: 0.7s; }
+
+/* Marquee */
+@keyframes scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-track { animation: scroll-left 40s linear infinite; }
+
+/* Card hover lift */
+.lift { transition: transform 0.5s cubic-bezier(.2,.7,.2,1), box-shadow 0.5s; }
+.lift:hover { transform: translateY(-6px); }
+
+/* Pattern background — for hero edges, footer, etc. */
+.bg-brand-pattern {
+  background-color: var(--burgundy);
+  background-image:
+    radial-gradient(circle at 20% 25%, rgba(255,215,0,0.06) 0%, transparent 30%),
+    radial-gradient(circle at 80% 75%, rgba(255,215,0,0.05) 0%, transparent 35%);
+}
+
+/* Diagonal section divider */
+.diag-top    { clip-path: polygon(0 4%, 100% 0, 100% 100%, 0 100%); }
+.diag-bottom { clip-path: polygon(0 0, 100% 0, 100% 96%, 0 100%); }
+
+/* Heavy display text shadow for editorial impact */
+.display-shadow { text-shadow: 0 2px 0 rgba(128,0,32,0.08); }
