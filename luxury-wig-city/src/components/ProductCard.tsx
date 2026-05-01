@@ -5,40 +5,44 @@ import { formatNaira } from '../lib/supabase'
 
 interface ProductCardProps {
   product: Product
-  index?:  number
+  index?: number
+}
+
+const badgeStyle: Record<string, string> = {
+  'Bestseller':    'bg-gold text-ink-soft',
+  'New':           'bg-burgundy text-gold',
+  'Limited':       'bg-ink-soft text-gold',
+  "Editor's Pick": 'bg-gold text-ink-soft'
 }
 
 /**
- * Stylized product card. Uses gradient/pattern backgrounds
- * with the brand mascot silhouette as the placeholder image —
- * swaps for real photos when Precious uploads vendor photography.
+ * Luxury Wig City product card. 3:4 portrait, 2 px radius, full-bleed photo
+ * with dark scrim, gold pill badge top-left, italic Cormorant "No. 0n"
+ * top-right. Hover lifts 6 px with deeper shadow + brightness bump.
  */
 export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
-  const badgeColor = {
-    'Bestseller':       'bg-gold text-burgundy',
-    'New':              'bg-burgundy text-gold',
-    'Limited':          'bg-black text-gold',
-    "Editor's Pick":    'bg-gold text-burgundy'
-  }[product.badge ?? 'Bestseller']
-
   const hero = product.images?.[0]
   const onSale = product.discount_price != null && product.discount_price < product.price
-  const displayPrice    = onSale ? product.discount_price! : product.price
-  const strikethrough   = onSale ? product.price : null
+  const displayPrice  = onSale ? product.discount_price! : product.price
+  const strikethrough = onSale ? product.price : null
+  const badgeCls = badgeStyle[product.badge ?? 'Bestseller'] ?? 'bg-gold text-ink-soft'
 
   return (
-    <Link to={`/shop/${product.id}`} className="group lift block">
-      <div className="relative aspect-[3/4] bg-burgundy rounded-sm overflow-hidden">
-        {/* Brand pattern background */}
+    <Link
+      to={`/shop/${product.id}`}
+      className="group lift block rounded-sm shadow-card hover:shadow-lift hover:brightness-[1.04]"
+    >
+      <div className="relative aspect-[3/4] bg-burgundy-900 rounded-sm overflow-hidden">
+        {/* Burgundy → amber radial gradient base + subtle grain */}
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `radial-gradient(circle at 30% 30%, rgba(255,215,0,0.4) 0%, transparent 50%), radial-gradient(circle at 75% 70%, rgba(255,215,0,0.25) 0%, transparent 50%)`
+            background: 'radial-gradient(circle at 30% 30%, rgba(255,215,0,0.40) 0%, transparent 55%), radial-gradient(circle at 75% 75%, rgba(128,0,32,0.85) 0%, rgba(26,0,6,0.95) 70%)'
           }}
         />
 
         {hero ? (
-          <img src={hero} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+          <img src={hero} alt={product.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
         ) : (
           <svg viewBox="0 0 200 270" className="absolute inset-0 w-full h-full opacity-90" preserveAspectRatio="xMidYMid slice">
             <path
@@ -62,36 +66,56 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
           </svg>
         )}
 
+        {/* Subtle film grain overlay (mix-blend overlay) */}
+        <div
+          className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-30"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.07  0 0 0 0 0.0  0 0 0 0 0.02  0 0 0 0.32 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")"
+          }}
+        />
+
         {/* Badge */}
         {product.badge && (
-          <div className={`absolute top-4 left-4 px-2 py-1 ${badgeColor} text-[10px] tracking-widest uppercase font-bold rounded`}>
+          <div
+            className={`absolute top-4 left-4 px-3 py-1.5 ${badgeCls} text-[11px] tracking-uppercase uppercase font-bold rounded-md shadow-soft`}
+          >
             {product.badge}
           </div>
         )}
 
         {/* No. */}
-        <div className="absolute top-4 right-4 font-serif italic text-offwhite/70 text-xs">
+        <div className="absolute top-4 right-4 font-serif italic text-gold/85 text-sm">
           No. {String(index + 1).padStart(2, '0')}
         </div>
 
-        {/* Bottom info overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-burgundy-900 via-burgundy-900/80 to-transparent">
-          <div className="text-[10px] tracking-[0.18em] uppercase text-gold/80 mb-1">{product.category}</div>
-          <div className="font-serif text-offwhite text-xl font-semibold leading-tight">{product.name}</div>
-          <div className="flex items-center justify-between mt-2">
+        {/* Bottom scrim — black gradient with gold/serif/price typography */}
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-16 bg-gradient-to-t from-black/95 via-black/80 to-transparent">
+          <div className="text-[11px] tracking-eyebrow uppercase font-semibold text-gold mb-1.5">
+            {product.category}
+          </div>
+          <div className="font-serif text-offwhite text-2xl lg:text-[28px] font-medium leading-[1.05] mb-3">
+            {product.name}
+          </div>
+          <div className="flex items-end justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-gold font-bold text-sm">{formatNaira(displayPrice)}</span>
+              <span className="text-gold font-bold text-[22px] tracking-tight">{formatNaira(displayPrice)}</span>
               {strikethrough && (
-                <span className="text-offwhite/50 text-xs line-through">{formatNaira(strikethrough)}</span>
+                <span className="text-offwhite/55 text-xs line-through">{formatNaira(strikethrough)}</span>
               )}
             </div>
-            <div className="text-offwhite/70 text-xs">★ {product.rating}</div>
+            <div className="text-offwhite text-sm flex items-center gap-1.5">
+              <span className="text-gold">★</span>
+              <span>{product.rating}</span>
+            </div>
           </div>
         </div>
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-burgundy/80 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-          <span className="text-gold font-display text-2xl tracking-wider uppercase">View Details</span>
+        {/* Hover headline overlay — kept subtle so the photo still leads */}
+        <div className="absolute inset-0 bg-burgundy/0 group-hover:bg-burgundy/35 transition-colors duration-500 ease-luxe flex items-center justify-center pointer-events-none">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-luxe text-gold font-display text-2xl tracking-wider uppercase">
+            View Details
+          </span>
         </div>
       </div>
     </Link>

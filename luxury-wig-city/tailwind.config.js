@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // EXACT brand palette from Precious's identity guide
+        // EXACT brand palette from Luxury Wig City identity guide.
         burgundy: {
           DEFAULT: '#800020',
           50:  '#FCEEF0',
@@ -35,24 +35,39 @@ export default {
         pearl:    '#F8F5EE',
         ash:      '#E0E0E0',
         smoke:    '#ADADAD',
-        ink:      '#000000'
+        ink:      '#000000',
+        'ink-soft': '#1A0006'
       },
       fontFamily: {
-        // Display logo wordmark — fashion serif with character
+        // Decorative fashion serif for the "luxury wig city" wordmark.
         wordmark: ['Italiana', 'serif'],
-        // Heavy condensed display for "BECAUSE YOUR HAIR IS THE CROWN"
+        // Heavy condensed display for "BECAUSE YOUR HAIR IS THE CROWN".
         display:  ['Anton', 'sans-serif'],
-        // Editorial serif for elegant copy
+        // Editorial italic serif for ledes / pull-quotes.
         serif:    ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        // Clean body sans
+        // UI + body sans.
         sans:     ['"DM Sans"', 'system-ui', 'sans-serif']
       },
       letterSpacing: {
-        wordmark: '0.02em',
-        display: '-0.01em'
+        wordmark:  '0.02em',
+        display:   '-0.01em',
+        button:    '0.12em',
+        uppercase: '0.18em',
+        eyebrow:   '0.30em'
       },
       boxShadow: {
-        luxe: '0 30px 60px -20px rgba(128,0,32,0.35)'
+        soft:  '0 4px 12px -4px rgba(26,0,6,0.08)',
+        card:  '0 12px 28px -16px rgba(26,0,6,0.18)',
+        lift:  '0 22px 44px -22px rgba(26,0,6,0.28)',
+        luxe:  '0 30px 60px -20px rgba(128,0,32,0.35)',
+        gold:  '0 18px 40px -16px rgba(255,215,0,0.45)'
+      },
+      transitionTimingFunction: {
+        luxe: 'cubic-bezier(0.20, 0.70, 0.20, 1.00)',
+        out:  'cubic-bezier(0.16, 1, 0.30, 1)'
+      },
+      maxWidth: {
+        container: '1400px'
       }
     }
   },

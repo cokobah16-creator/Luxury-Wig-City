@@ -2,20 +2,117 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   LUXURY WIG CITY — Foundations
+   "Because your hair is the crown."
+   ========================================================= */
+
 :root {
-  --burgundy: #800020;
-  --burgundy-deep: #4D0013;
-  --gold: #FFD700;
-  --gold-deep: #D6B500;
-  --offwhite: #FDFFFC;
-  --pearl: #F8F5EE;
+  /* ===== BRAND COLORS ===== */
+  --burgundy:       #800020;
+  --burgundy-50:    #FCEEF0;
+  --burgundy-100:   #F5C9D0;
+  --burgundy-200:   #E58A98;
+  --burgundy-300:   #C8505F;
+  --burgundy-400:   #A2293A;
+  --burgundy-500:   #800020;
+  --burgundy-600:   #660019;
+  --burgundy-700:   #4D0013;
+  --burgundy-800:   #33000C;
+  --burgundy-900:   #1A0006;
+
+  --gold:           #FFD700;
+  --gold-50:        #FFFBE0;
+  --gold-100:       #FFF4A8;
+  --gold-200:       #FFE970;
+  --gold-300:       #FFE03A;
+  --gold-400:       #FFD700;
+  --gold-500:       #D6B500;
+  --gold-600:       #A38A00;
+  --gold-700:       #705F00;
+  --gold-800:       #3D3400;
+  --gold-900:       #1A1700;
+
+  --offwhite:       #FDFFFC;
+  --pearl:          #F8F5EE;
+  --ash:            #E0E0E0;
+  --smoke:          #ADADAD;
+  --ink:            #000000;
+  --ink-soft:       #1A0006;
+
+  /* legacy aliases (kept for any consumers) */
+  --burgundy-deep:  #4D0013;
+  --gold-deep:      #D6B500;
+
+  /* ===== SEMANTIC TOKENS ===== */
+  --bg:             var(--offwhite);
+  --bg-soft:        var(--pearl);
+  --bg-inverse:     var(--burgundy);
+  --bg-accent:      var(--gold);
+
+  --fg:             var(--ink-soft);
+  --fg-muted:       rgba(26, 0, 6, 0.65);
+  --fg-subtle:      rgba(26, 0, 6, 0.45);
+
+  --border:         rgba(128, 0, 32, 0.10);
+  --border-strong:  rgba(128, 0, 32, 0.25);
+  --border-gold:    rgba(255, 215, 0, 0.20);
+
+  /* ===== TYPE FAMILIES ===== */
+  --font-wordmark: 'Italiana', 'Cormorant Garamond', serif;
+  --font-display:  'Anton', 'Oswald', 'Bebas Neue', sans-serif;
+  --font-serif:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans:     'DM Sans', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+
+  /* ===== TYPE SCALE ===== */
+  --t-display-xl: clamp(64px, 9vw, 120px);
+  --t-display-lg: clamp(48px, 6.5vw, 88px);
+  --t-display-md: clamp(36px, 4.5vw, 64px);
+  --t-display-sm: clamp(28px, 3vw, 44px);
+  --t-h1:  clamp(40px, 5vw, 72px);
+  --t-h2:  clamp(30px, 3.5vw, 48px);
+  --t-h3:  28px;
+  --t-h4:  22px;
+  --t-h5:  18px;
+  --t-eyebrow: 11px;
+  --t-body:    16px;
+  --t-body-lg: 18px;
+  --t-small:   14px;
+  --t-micro:   12px;
+
+  --lh-display: 0.92;
+  --lh-tight:   1.1;
+  --lh-snug:    1.3;
+  --lh-body:    1.55;
+
+  --ls-wordmark:  0.02em;
+  --ls-display:  -0.01em;
+  --ls-eyebrow:   0.30em;
+  --ls-uppercase: 0.18em;
+  --ls-button:    0.12em;
+
+  /* ===== SHADOWS ===== */
+  --shadow-soft:  0 4px 12px -4px rgba(26, 0, 6, 0.08);
+  --shadow-card:  0 12px 28px -16px rgba(26, 0, 6, 0.18);
+  --shadow-lift:  0 22px 44px -22px rgba(26, 0, 6, 0.28);
+  --shadow-luxe:  0 30px 60px -20px rgba(128, 0, 32, 0.35);
+  --shadow-gold:  0 18px 40px -16px rgba(255, 215, 0, 0.45);
+
+  /* ===== MOTION ===== */
+  --ease-luxe: cubic-bezier(0.20, 0.70, 0.20, 1.00);
+  --ease-out:  cubic-bezier(0.16, 1, 0.30, 1);
+  --dur-fast:  180ms;
+  --dur-base:  300ms;
+  --dur-slow:  500ms;
+  --dur-reveal: 900ms;
 }
 
 html { scroll-behavior: smooth; }
+
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--offwhite);
-  color: #1A0006;
+  color: var(--ink-soft);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -27,7 +124,35 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--pearl); }
 ::-webkit-scrollbar-thumb { background: var(--burgundy); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--burgundy-deep); }
+::-webkit-scrollbar-thumb:hover { background: var(--burgundy-700); }
+
+/* ===== SEMANTIC TYPE UTILITIES =====
+   Mirror the design-system classes so any HTML escape hatch
+   (markdown copy, marketing pages) stays on-brand. */
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--t-eyebrow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--gold-600);
+}
+
+.editorial,
+.lede {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--t-body-lg);
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.tracking-wide-uppercase {
+  text-transform: uppercase;
+  letter-spacing: var(--ls-uppercase);
+  font-weight: 600;
+}
 
 /* Wordmark sparkle decoration helper */
 .sparkle::after {
@@ -44,7 +169,7 @@ body {
   from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.reveal { opacity: 0; animation: rise 0.9s cubic-bezier(.2,.7,.2,1) forwards; }
+.reveal { opacity: 0; animation: rise 0.9s var(--ease-luxe) forwards; }
 .d-1 { animation-delay: 0.1s; }
 .d-2 { animation-delay: 0.25s; }
 .d-3 { animation-delay: 0.4s; }
@@ -58,8 +183,13 @@ body {
 }
 .marquee-track { animation: scroll-left 40s linear infinite; }
 
-/* Card hover lift */
-.lift { transition: transform 0.5s cubic-bezier(.2,.7,.2,1), box-shadow 0.5s; }
+/* Card hover lift — the brand's signature interaction */
+.lift {
+  transition:
+    transform var(--dur-slow) var(--ease-luxe),
+    box-shadow var(--dur-slow) var(--ease-luxe),
+    filter var(--dur-slow) var(--ease-luxe);
+}
 .lift:hover { transform: translateY(-6px); }
 
 /* Pattern background — for hero edges, footer, etc. */

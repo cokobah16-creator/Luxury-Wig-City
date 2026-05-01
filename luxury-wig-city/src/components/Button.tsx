@@ -21,9 +21,9 @@ const variants = {
   gold:      'bg-gold hover:bg-gold-300 text-burgundy border border-gold'
 }
 const sizes = {
-  sm: 'px-4 py-2 text-xs tracking-wider',
-  md: 'px-6 py-3 text-sm tracking-wide',
-  lg: 'px-8 py-4 text-sm tracking-wider'
+  sm: 'px-4 py-2 text-xs',
+  md: 'px-6 py-3 text-sm',
+  lg: 'px-8 py-4 text-sm'
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -38,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   disabled = false
 }) => {
-  const cls = `inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase transition-all duration-300 ${
+  const cls = `inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase tracking-button transition-all duration-300 ease-luxe ${
     variants[variant]
   } ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`
 

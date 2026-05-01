@@ -9,9 +9,9 @@ interface WordmarkProps {
 }
 
 const sizeMap = {
-  sm: { wrap: 'leading-[0.8]', top: 'text-[20px]', bot: 'text-[20px]' },
-  md: { wrap: 'leading-[0.78]', top: 'text-[36px]', bot: 'text-[36px]' },
-  lg: { wrap: 'leading-[0.8]', top: 'text-[80px] sm:text-[110px]', bot: 'text-[80px] sm:text-[110px]' }
+  sm: { wrap: 'leading-[0.8]',  top: 'text-[20px]',                  bot: 'text-[20px]' },
+  md: { wrap: 'leading-[0.78]', top: 'text-[36px]',                  bot: 'text-[36px]' },
+  lg: { wrap: 'leading-[0.8]',  top: 'text-[80px] sm:text-[110px]',  bot: 'text-[80px] sm:text-[110px]' }
 }
 const colorMap = {
   burgundy: 'text-burgundy',
@@ -20,20 +20,21 @@ const colorMap = {
 }
 
 /**
- * Recreated "luxury wigs" stacked wordmark using Italiana — a fashion serif
- * that approximates the custom decorative serif in Precious's brand mark,
- * with sparkle accents in the letterforms.
+ * "luxury wig city" wordmark in Italiana — fashion-serif italic with sparkle
+ * accents. Defaults to the full brand name; the legacy "luxury wigs" variant
+ * is preserved for the stacked square mark.
  */
 export const Wordmark: React.FC<WordmarkProps> = ({
   size = 'md',
   color = 'burgundy',
-  variant = 'stacked',
-  brand = 'luxury wigs',
+  variant = 'inline',
+  brand = 'luxury wig city',
   className = ''
 }) => {
   const s = sizeMap[size]
   const c = colorMap[color]
 
+  // The full "luxury wig city" lockup only fits inline.
   if (variant === 'inline' || brand === 'luxury wig city') {
     return (
       <div className={`font-wordmark ${c} ${className} flex items-baseline gap-2 whitespace-nowrap`}>
