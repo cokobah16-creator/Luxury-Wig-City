@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
 
 const url    = import.meta.env.VITE_SUPABASE_URL
 const anon   = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -10,7 +9,13 @@ if (!url || !anon) {
   console.warn('[supabase] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY not set — auth and data fetching will fail.')
 }
 
-export const supabase = createClient<Database>(
+// The hand-written `Database` type in ./database.types.ts uses `interface`
+// for each Row, which TypeScript treats as not assignable to
+// `Record<string, unknown>` — so passing `<Database>` to createClient
+// collapses Schema to `never` on inserts. Reads stay typed via explicit
+// `as` casts in queries.ts; regenerate this file with
+// `supabase gen types typescript` to restore full client-side typing.
+export const supabase = createClient(
   url ?? 'http://localhost:54321',
   anon ?? 'public-anon-key',
   {

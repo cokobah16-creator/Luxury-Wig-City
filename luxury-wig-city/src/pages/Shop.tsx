@@ -1,40 +1,47 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ProductCard } from '../components/ProductCard'
-import { wigs } from '../data/wigs'
+import { useProducts, type ProductFilters } from '../lib/queries'
+import type { ProductCategory, ProductTexture } from '../lib/database.types'
 
-const categories = ['Bone Straight', 'Pixie Curls', 'Frontal Wigs', 'Closure Wigs', 'Braided Wigs']
-const textures = ['Straight', 'Wavy', 'Curly', 'Kinky']
-const lengths = [{ label: 'Short (10-16")', min: 10, max: 16 }, { label: 'Medium (18-22")', min: 18, max: 22 }, { label: 'Long (24-28")', min: 24, max: 28 }, { label: 'Extra Long (30"+)', min: 30, max: 99 }]
+const categories: ProductCategory[] = [
+  'Bone Straight', 'Bouncy Hair', 'Pixie Curl', 'Closure Wigs',
+  'Frontal Wigs', 'Braided Wigs', 'Colored Wigs', 'Short Wigs', 'Custom Wigs'
+]
+const textures: ProductTexture[] = ['Straight', 'Wavy', 'Curly', 'Kinky']
+const lengths = [
+  { label: 'Short (10-16")',     min: 10, max: 16 },
+  { label: 'Medium (18-22")',    min: 18, max: 22 },
+  { label: 'Long (24-28")',      min: 24, max: 28 },
+  { label: 'Extra Long (30"+)',  min: 30, max: 99 }
+]
 const laceTypes = ['13x4 HD Lace', '13x6 HD Lace', '5x5 Closure', '4x4 Closure', 'Full Lace', 'No Lace']
-const colors = ['Natural Black', 'Honey Blonde', 'Burgundy', 'Custom']
+const colors    = ['Natural Black', 'Honey Blonde', 'Burgundy', 'Custom']
 
 const Shop: React.FC = () => {
   const [params, setParams] = useSearchParams()
-  const initialCat = params.get('cat')
+  const initialCat = params.get('cat') as ProductCategory | null
 
-  const [selectedCat, setSelectedCat] = useState<string | null>(initialCat)
-  const [selectedTextures, setSelectedTextures] = useState<string[]>([])
+  const [selectedCat,          setSelectedCat]          = useState<ProductCategory | null>(initialCat)
+  const [selectedTextures,     setSelectedTextures]     = useState<ProductTexture[]>([])
   const [selectedLengthBucket, setSelectedLengthBucket] = useState<string | null>(null)
-  const [priceMax, setPriceMax] = useState(350000)
-  const [sort, setSort] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured')
+  const [priceMax,             setPriceMax]             = useState(350000)
+  const [search,               setSearch]               = useState('')
+  const [sort,                 setSort]                 = useState<NonNullable<ProductFilters['sort']>>('featured')
 
-  const filtered = useMemo(() => {
-    let list = [...wigs]
-    if (selectedCat) list = list.filter(w => w.category === selectedCat)
-    if (selectedTextures.length) list = list.filter(w => selectedTextures.includes(w.texture))
-    if (selectedLengthBucket) {
-      const bucket = lengths.find(l => l.label === selectedLengthBucket)
-      if (bucket) list = list.filter(w => w.length >= bucket.min && w.length <= bucket.max)
-    }
-    list = list.filter(w => w.price <= priceMax)
-    if (sort === 'price-asc') list.sort((a, b) => a.price - b.price)
-    if (sort === 'price-desc') list.sort((a, b) => b.price - a.price)
-    if (sort === 'rating') list.sort((a, b) => b.rating - a.rating)
-    return list
-  }, [selectedCat, selectedTextures, selectedLengthBucket, priceMax, sort])
+  const lengthBucket = lengths.find(l => l.label === selectedLengthBucket)
 
-  const toggleTexture = (t: string) =>
+  const { data: products = [], isLoading } = useProducts({
+    category:  selectedCat,
+    textures:  selectedTextures,
+    lengthMin: lengthBucket?.min,
+    lengthMax: lengthBucket?.max,
+    priceMax,
+    search:    search.trim() || undefined,
+    sort
+  })
+
+  const toggleTexture = (t: ProductTexture) =>
     setSelectedTextures(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
 
   const clearFilters = () => {
@@ -42,6 +49,7 @@ const Shop: React.FC = () => {
     setSelectedTextures([])
     setSelectedLengthBucket(null)
     setPriceMax(350000)
+    setSearch('')
     setParams({})
   }
 
@@ -55,7 +63,9 @@ const Shop: React.FC = () => {
             Browse the collection
           </h1>
           <p className="font-serif italic text-offwhite/80 text-lg mt-4">
-            {filtered.length} {filtered.length === 1 ? 'wig' : 'wigs'} found · curated and verified
+            {isLoading
+              ? 'Loading the collection…'
+              : `${products.length} ${products.length === 1 ? 'wig' : 'wigs'} found · curated and verified`}
           </p>
         </div>
       </section>
@@ -67,6 +77,18 @@ const Shop: React.FC = () => {
             <div className="flex items-center justify-between">
               <h2 className="font-display uppercase text-burgundy text-2xl">Filters</h2>
               <button onClick={clearFilters} className="text-xs text-burgundy/60 hover:text-burgundy underline">Clear all</button>
+            </div>
+
+            {/* Search */}
+            <div>
+              <div className="text-[11px] tracking-[0.2em] uppercase text-burgundy font-bold mb-3">Search</div>
+              <input
+                type="search"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Bone straight, blonde…"
+                className="w-full px-3 py-2 text-sm border border-burgundy/20 rounded-sm bg-offwhite focus:border-burgundy outline-none"
+              />
             </div>
 
             {/* Category */}
@@ -135,7 +157,7 @@ const Shop: React.FC = () => {
               <div className="text-xs mt-2 text-burgundy/70">Up to ₦{priceMax.toLocaleString()}</div>
             </div>
 
-            {/* Lace Type */}
+            {/* Lace Type — display-only chips for now (filter wired in v2) */}
             <div>
               <div className="text-[11px] tracking-[0.2em] uppercase text-burgundy font-bold mb-3">Lace Type</div>
               <div className="flex flex-wrap gap-2">
@@ -145,7 +167,7 @@ const Shop: React.FC = () => {
               </div>
             </div>
 
-            {/* Color */}
+            {/* Color — display-only chips for now */}
             <div>
               <div className="text-[11px] tracking-[0.2em] uppercase text-burgundy font-bold mb-3">Color</div>
               <div className="flex flex-wrap gap-2">
@@ -161,10 +183,12 @@ const Shop: React.FC = () => {
         <main className="lg:col-span-9">
           {/* Sort bar */}
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-burgundy/10">
-            <div className="text-sm text-burgundy/70">Showing {filtered.length} results</div>
+            <div className="text-sm text-burgundy/70">
+              {isLoading ? 'Loading…' : `Showing ${products.length} results`}
+            </div>
             <select
               value={sort}
-              onChange={e => setSort(e.target.value as any)}
+              onChange={e => setSort(e.target.value as NonNullable<ProductFilters['sort']>)}
               className="text-sm border border-burgundy/20 rounded-full px-4 py-2 bg-offwhite focus:border-burgundy outline-none"
             >
               <option value="featured">Featured</option>
@@ -174,14 +198,20 @@ const Shop: React.FC = () => {
             </select>
           </div>
 
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-[3/4] bg-pearl rounded-sm animate-pulse" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
             <div className="text-center py-20">
               <p className="font-serif italic text-burgundy/60 text-xl">No wigs match your filters.</p>
               <button onClick={clearFilters} className="mt-4 text-burgundy underline">Clear filters</button>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((wig, i) => <ProductCard key={wig.id} wig={wig} index={i} />)}
+              {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
             </div>
           )}
         </main>
