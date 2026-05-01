@@ -28,27 +28,34 @@ $$;
 -- Role helpers (used by RLS policies in migration 02)
 create or replace function public.is_admin()
 returns boolean
-language sql
+language plpgsql
 security definer
 stable
 set search_path = public
 as $$
-  select exists (
+begin
+  return exists (
     select 1 from public.profiles
     where id = auth.uid() and role = 'admin'
   );
+end;
 $$;
 
 create or replace function public.current_vendor_profile_id()
 returns uuid
-language sql
+language plpgsql
 security definer
 stable
 set search_path = public
 as $$
-  select id from public.vendor_profiles
-  where user_id = auth.uid() and status = 'approved'
-  limit 1;
+declare
+  vid uuid;
+begin
+  select id into vid from public.vendor_profiles
+    where user_id = auth.uid() and status = 'approved'
+    limit 1;
+  return vid;
+end;
 $$;
 
 -- =====================================================================
