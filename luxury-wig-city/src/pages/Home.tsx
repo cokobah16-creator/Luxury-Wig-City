@@ -4,18 +4,18 @@ import { Logo } from '../components/Logo'
 import { Wordmark } from '../components/Wordmark'
 import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
-import { wigs } from '../data/wigs'
+import { useProducts } from '../lib/queries'
 
 const categories = [
-  { name: 'Bone Straight', count: 26, slug: 'Bone+Straight' },
-  { name: 'Pixie Curls',   count: 14, slug: 'Pixie+Curls' },
-  { name: 'Frontal Wigs',  count: 38, slug: 'Frontal+Wigs' },
-  { name: 'Closure Wigs',  count: 22, slug: 'Closure+Wigs' },
-  { name: 'Braided Wigs',  count: 18, slug: 'Braided+Wigs' }
+  { name: 'Bone Straight', count: 26, slug: 'Bone Straight' },
+  { name: 'Pixie Curl',    count: 14, slug: 'Pixie Curl' },
+  { name: 'Frontal Wigs',  count: 38, slug: 'Frontal Wigs' },
+  { name: 'Closure Wigs',  count: 22, slug: 'Closure Wigs' },
+  { name: 'Braided Wigs',  count: 18, slug: 'Braided Wigs' }
 ]
 
 const Home: React.FC = () => {
-  const bestSellers = wigs.filter(w => w.badge === 'Bestseller' || w.rating >= 4.8).slice(0, 4)
+  const { data: bestSellers = [] } = useProducts({ isFeatured: true, limit: 4 })
 
   return (
     <div>
@@ -137,8 +137,8 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {bestSellers.map((wig, i) => (
-              <ProductCard key={wig.id} wig={wig} index={i} />
+            {bestSellers.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
             ))}
           </div>
         </div>

@@ -73,6 +73,9 @@ export interface VendorProfile {
   updated_at: string
 }
 
+export type ProductTexture = 'Straight' | 'Wavy' | 'Curly' | 'Kinky'
+export type ProductBadge   = 'Bestseller' | 'New' | 'Limited' | "Editor's Pick"
+
 export interface Product {
   id: string
   vendor_id: string | null
@@ -95,6 +98,14 @@ export interface Product {
   is_featured: boolean
   is_platform_product: boolean
   vendor_name: string | null
+  // Filterable scalars (migration 0005)
+  texture: ProductTexture | null
+  length_inches: number | null
+  density: number | null
+  lace_type: string | null
+  primary_color: string | null
+  hair_type: string | null
+  badge: ProductBadge | null
   created_at: string
   updated_at: string
 }
@@ -299,26 +310,28 @@ export interface CommunityPost {
 export interface Database {
   public: {
     Tables: {
-      profiles:              { Row: Profile;           Insert: Partial<Profile>           & { id: string };  Update: Partial<Profile> }
-      vendor_profiles:       { Row: VendorProfile;     Insert: Partial<VendorProfile>     & { user_id: string; store_name: string }; Update: Partial<VendorProfile> }
-      products:              { Row: Product;           Insert: Partial<Product>           & { name: string; price: number; category: ProductCategory }; Update: Partial<Product> }
-      cart_items:            { Row: CartItem;          Insert: Partial<CartItem>          & { customer_id: string; product_id: string; price: number }; Update: Partial<CartItem> }
-      wishlist_items:        { Row: WishlistItem;      Insert: Partial<WishlistItem>      & { customer_id: string; product_id: string }; Update: Partial<WishlistItem> }
-      orders:                { Row: Order;             Insert: Partial<Order>             & { customer_id: string; total_amount: number }; Update: Partial<Order> }
-      reviews:               { Row: Review;            Insert: Partial<Review>            & { product_id: string; customer_id: string; rating: number }; Update: Partial<Review> }
-      messages:              { Row: Message;           Insert: Partial<Message>           & { sender_id: string; receiver_id: string; content: string; conversation_id: string }; Update: Partial<Message> }
-      notifications:         { Row: Notification;      Insert: Partial<Notification>      & { user_id: string; title: string; message: string }; Update: Partial<Notification> }
-      announcements:         { Row: Announcement;      Insert: Partial<Announcement>      & { text: string }; Update: Partial<Announcement> }
-      flash_sales:           { Row: FlashSale;         Insert: Partial<FlashSale>         & { product_id: string; sale_price: number; end_time: string }; Update: Partial<FlashSale> }
-      ip_violations:         { Row: IPViolation;       Insert: Partial<IPViolation>       & { reporter_email: string; description: string }; Update: Partial<IPViolation> }
-      custom_wig_requests:   { Row: CustomWigRequest;  Insert: Partial<CustomWigRequest>  & { customer_id: string }; Update: Partial<CustomWigRequest> }
-      user_wigs:             { Row: UserWig;           Insert: Partial<UserWig>           & { user_id: string }; Update: Partial<UserWig> }
-      community_posts:       { Row: CommunityPost;     Insert: Partial<CommunityPost>     & { user_id: string; photo_url: string }; Update: Partial<CommunityPost> }
+      profiles:              { Row: Profile;           Insert: Partial<Profile>           & { id: string };                                                  Update: Partial<Profile>;          Relationships: [] }
+      vendor_profiles:       { Row: VendorProfile;     Insert: Partial<VendorProfile>     & { user_id: string; store_name: string };                          Update: Partial<VendorProfile>;    Relationships: [] }
+      products:              { Row: Product;           Insert: Partial<Product>           & { name: string; price: number; category: ProductCategory };       Update: Partial<Product>;          Relationships: [] }
+      cart_items:            { Row: CartItem;          Insert: Partial<CartItem>          & { customer_id: string; product_id: string; price: number };       Update: Partial<CartItem>;         Relationships: [] }
+      wishlist_items:        { Row: WishlistItem;      Insert: Partial<WishlistItem>      & { customer_id: string; product_id: string };                      Update: Partial<WishlistItem>;     Relationships: [] }
+      orders:                { Row: Order;             Insert: Partial<Order>             & { customer_id: string; total_amount: number };                    Update: Partial<Order>;            Relationships: [] }
+      reviews:               { Row: Review;            Insert: Partial<Review>            & { product_id: string; customer_id: string; rating: number };      Update: Partial<Review>;           Relationships: [] }
+      messages:              { Row: Message;           Insert: Partial<Message>           & { sender_id: string; receiver_id: string; content: string; conversation_id: string }; Update: Partial<Message>; Relationships: [] }
+      notifications:         { Row: Notification;      Insert: Partial<Notification>      & { user_id: string; title: string; message: string };              Update: Partial<Notification>;     Relationships: [] }
+      announcements:         { Row: Announcement;      Insert: Partial<Announcement>      & { text: string };                                                 Update: Partial<Announcement>;     Relationships: [] }
+      flash_sales:           { Row: FlashSale;         Insert: Partial<FlashSale>         & { product_id: string; sale_price: number; end_time: string };     Update: Partial<FlashSale>;        Relationships: [] }
+      ip_violations:         { Row: IPViolation;       Insert: Partial<IPViolation>       & { reporter_email: string; description: string };                  Update: Partial<IPViolation>;      Relationships: [] }
+      custom_wig_requests:   { Row: CustomWigRequest;  Insert: Partial<CustomWigRequest>  & { customer_id: string };                                          Update: Partial<CustomWigRequest>; Relationships: [] }
+      user_wigs:             { Row: UserWig;           Insert: Partial<UserWig>           & { user_id: string };                                              Update: Partial<UserWig>;          Relationships: [] }
+      community_posts:       { Row: CommunityPost;     Insert: Partial<CommunityPost>     & { user_id: string; photo_url: string };                           Update: Partial<CommunityPost>;    Relationships: [] }
     }
-    Views: {}
+    Views: Record<never, never>
     Functions: {
-      is_admin: { Args: Record<string, never>; Returns: boolean }
+      is_admin:                  { Args: Record<string, never>; Returns: boolean }
       current_vendor_profile_id: { Args: Record<string, never>; Returns: string | null }
     }
+    Enums:          Record<never, never>
+    CompositeTypes: Record<never, never>
   }
 }

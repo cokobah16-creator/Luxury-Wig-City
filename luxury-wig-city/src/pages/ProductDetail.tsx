@@ -1,17 +1,52 @@
-import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { wigs, formatNaira } from '../data/wigs'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
+import { useProduct, useProductReviews, useProducts } from '../lib/queries'
+import { useAddToCart } from '../lib/mutations'
+import { useAuth } from '../contexts/AuthContext'
+import { formatNaira } from '../lib/supabase'
 
 const ProductDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
-  const wig = wigs.find(w => w.id === id)
-  const [activeImage, setActiveImage] = useState(0)
-  const [qty, setQty] = useState(1)
+  const { id }     = useParams<{ id: string }>()
+  const navigate   = useNavigate()
+  const { user }   = useAuth()
 
-  if (!wig) {
+  const { data: product,  isLoading } = useProduct(id)
+  const { data: reviews = [] }        = useProductReviews(id)
+  const { data: related = [] }        = useProducts({
+    category:  product?.category ?? null,
+    excludeId: id,
+    limit:     4
+  })
+
+  const [activeImage, setActiveImage] = useState(0)
+  const [qty,         setQty]         = useState(1)
+  const [pickedLength,  setPickedLength]  = useState<string | null>(null)
+  const [pickedCapSize, setPickedCapSize] = useState<string | null>(null)
+  const [pickedColor,   setPickedColor]   = useState<string | null>(null)
+
+  // Default the variant pickers to the first option when the product loads.
+  useEffect(() => {
+    if (!product) return
+    setPickedLength(prev  => prev  ?? product.lengths?.[0]   ?? null)
+    setPickedCapSize(prev => prev  ?? product.cap_sizes?.[0] ?? null)
+    setPickedColor(prev   => prev  ?? product.colors?.[0]    ?? null)
+  }, [product])
+
+  const addToCart = useAddToCart(user?.id)
+
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto px-6 py-32 text-center">
+        <Logo size={80} variant="gold-on-burgundy" className="mx-auto animate-pulse" />
+      </div>
+    )
+  }
+
+  if (!product) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-32 text-center">
         <h1 className="font-display uppercase text-burgundy text-5xl mb-4">Wig Not Found</h1>
@@ -20,7 +55,31 @@ const ProductDetail: React.FC = () => {
     )
   }
 
-  const related = wigs.filter(w => w.id !== wig.id && w.category === wig.category).slice(0, 4)
+  const onAddToCart = () => {
+    if (!user) {
+      toast.info('Sign in to save your bag.')
+      navigate('/account')
+      return
+    }
+    addToCart.mutate(
+      {
+        product,
+        quantity: qty,
+        length:   pickedLength,
+        cap_size: pickedCapSize,
+        color:    pickedColor
+      },
+      {
+        onSuccess: () => toast.success(`Added ${qty} × ${product.name} to your bag.`),
+        onError:   e  => toast.error(e instanceof Error ? e.message : 'Could not add to cart.')
+      }
+    )
+  }
+
+  const onSale = product.discount_price != null && product.discount_price < product.price
+  const heroPrice    = onSale ? product.discount_price! : product.price
+  const oldPrice     = onSale ? product.price : null
+  const heroImage    = product.images?.[activeImage]
 
   return (
     <div className="bg-offwhite">
@@ -30,37 +89,48 @@ const ProductDetail: React.FC = () => {
         <span className="mx-2">/</span>
         <Link to="/shop" className="hover:text-burgundy">Shop</Link>
         <span className="mx-2">/</span>
-        <span className="text-burgundy">{wig.name}</span>
+        <span className="text-burgundy">{product.name}</span>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 grid lg:grid-cols-2 gap-12">
         {/* GALLERY */}
         <div>
-          {/* Main image */}
           <div className="relative aspect-square bg-burgundy rounded-sm overflow-hidden mb-4">
-            <div className="absolute inset-0 opacity-30" style={{
-              backgroundImage: `radial-gradient(circle at ${30 + activeImage * 15}% 30%, rgba(255,215,0,0.4) 0%, transparent 50%)`
-            }} />
-            <Logo size={500} variant="mono-gold" className="absolute inset-0 m-auto opacity-40" />
-            {wig.badge && (
+            {heroImage ? (
+              <img src={heroImage} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <>
+                <div className="absolute inset-0 opacity-30" style={{
+                  backgroundImage: `radial-gradient(circle at ${30 + activeImage * 15}% 30%, rgba(255,215,0,0.4) 0%, transparent 50%)`
+                }} />
+                <Logo size={500} variant="mono-gold" className="absolute inset-0 m-auto opacity-40" />
+              </>
+            )}
+            {product.badge && (
               <div className="absolute top-6 left-6 px-3 py-1.5 bg-gold text-burgundy text-[11px] tracking-widest uppercase font-bold rounded">
-                {wig.badge}
+                {product.badge}
               </div>
             )}
           </div>
 
-          {/* Thumbnails */}
+          {/* Thumbnails — fall back to 4 placeholder tiles when no images yet */}
           <div className="grid grid-cols-4 gap-3">
-            {[0, 1, 2, 3].map(i => (
+            {(product.images?.length ? product.images : [null, null, null, null]).slice(0, 4).map((img, i) => (
               <button
                 key={i}
                 onClick={() => setActiveImage(i)}
                 className={`aspect-square bg-burgundy rounded-sm overflow-hidden border-2 ${activeImage === i ? 'border-gold' : 'border-transparent'}`}
               >
-                <div className="absolute inset-0 opacity-30" style={{
-                  backgroundImage: `radial-gradient(circle at ${30 + i * 15}% 30%, rgba(255,215,0,0.4) 0%, transparent 50%)`
-                }} />
-                <Logo size={100} variant="mono-gold" className="opacity-60 m-auto" />
+                {img ? (
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 opacity-30" style={{
+                      backgroundImage: `radial-gradient(circle at ${30 + i * 15}% 30%, rgba(255,215,0,0.4) 0%, transparent 50%)`
+                    }} />
+                    <Logo size={100} variant="mono-gold" className="opacity-60 m-auto" />
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -68,39 +138,45 @@ const ProductDetail: React.FC = () => {
 
         {/* INFO */}
         <div>
-          <div className="text-[11px] tracking-[0.3em] uppercase text-gold-600 font-bold mb-3">{wig.category}</div>
+          <div className="text-[11px] tracking-[0.3em] uppercase text-gold-600 font-bold mb-3">{product.category}</div>
           <h1 className="font-display uppercase text-burgundy text-5xl lg:text-6xl tracking-tight display-shadow leading-none">
-            {wig.name}
+            {product.name}
           </h1>
 
           {/* Vendor + rating */}
           <div className="flex items-center gap-4 mt-4 text-sm text-burgundy/70">
-            <span>by <span className="font-semibold text-burgundy">{wig.vendor}</span></span>
-            <span>·</span>
-            <span className="text-gold-600">★ {wig.rating}</span>
-            <span>({wig.reviews} reviews)</span>
+            {product.vendor_name && (
+              <>
+                <span>by <span className="font-semibold text-burgundy">{product.vendor_name}</span></span>
+                <span>·</span>
+              </>
+            )}
+            <span className="text-gold-600">★ {product.rating}</span>
+            <span>({product.review_count} reviews)</span>
           </div>
 
           {/* Price */}
           <div className="flex items-baseline gap-3 mt-6">
-            <span className="font-display text-burgundy text-4xl">{formatNaira(wig.price)}</span>
-            {wig.oldPrice && (
-              <span className="text-burgundy/40 text-xl line-through">{formatNaira(wig.oldPrice)}</span>
+            <span className="font-display text-burgundy text-4xl">{formatNaira(heroPrice)}</span>
+            {oldPrice && (
+              <span className="text-burgundy/40 text-xl line-through">{formatNaira(oldPrice)}</span>
             )}
           </div>
 
           {/* Description */}
-          <p className="mt-6 font-serif text-lg text-ink/80 leading-relaxed">{wig.description}</p>
+          {product.description && (
+            <p className="mt-6 font-serif text-lg text-ink/80 leading-relaxed">{product.description}</p>
+          )}
 
           {/* Attributes grid */}
           <div className="mt-8 grid grid-cols-2 gap-4 p-6 bg-pearl rounded-sm">
             {[
-              ['Length', `${wig.length}"`],
-              ['Density', `${wig.density}%`],
-              ['Texture', wig.texture],
-              ['Lace Type', wig.laceType],
-              ['Color', wig.color],
-              ['Hair Type', wig.hairType]
+              ['Length',     product.length_inches ? `${product.length_inches}"` : '—'],
+              ['Density',    product.density       ? `${product.density}%`       : '—'],
+              ['Texture',    product.texture       ?? '—'],
+              ['Lace Type',  product.lace_type     ?? '—'],
+              ['Color',      product.primary_color ?? '—'],
+              ['Hair Type',  product.hair_type     ?? '—']
             ].map(([k, v]) => (
               <div key={k}>
                 <div className="text-[10px] tracking-[0.2em] uppercase text-burgundy/60 font-bold">{k}</div>
@@ -108,6 +184,21 @@ const ProductDetail: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Variants */}
+          {(product.lengths.length > 0 || product.cap_sizes.length > 0 || product.colors.length > 0) && (
+            <div className="mt-8 space-y-4">
+              {product.lengths.length > 0 && (
+                <Picker label="Length"   options={product.lengths}   value={pickedLength}  onChange={setPickedLength}  />
+              )}
+              {product.cap_sizes.length > 0 && (
+                <Picker label="Cap Size" options={product.cap_sizes} value={pickedCapSize} onChange={setPickedCapSize} />
+              )}
+              {product.colors.length > 0 && (
+                <Picker label="Color"    options={product.colors}    value={pickedColor}   onChange={setPickedColor}   />
+              )}
+            </div>
+          )}
 
           {/* Quantity */}
           <div className="mt-8 flex items-center gap-4">
@@ -117,19 +208,22 @@ const ProductDetail: React.FC = () => {
               <span className="px-4 py-2 font-semibold">{qty}</span>
               <button onClick={() => setQty(qty + 1)} className="px-4 py-2 hover:bg-pearl">+</button>
             </div>
+            {product.stock > 0 && (
+              <span className="text-xs text-burgundy/60">{product.stock} in stock</span>
+            )}
           </div>
 
           {/* CTAs */}
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button variant="primary" size="lg" fullWidth>
-              Add to Cart
+            <Button variant="primary" size="lg" fullWidth onClick={onAddToCart} disabled={addToCart.isPending || product.stock === 0}>
+              {addToCart.isPending ? 'Adding…' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button to="/try-on" variant="secondary" size="lg" fullWidth>
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6L12 2z"/></svg>
               Try This Wig (AI)
             </Button>
             <Button
-              href={`https://wa.me/2348000000000?text=Hi%20I'm%20interested%20in%20${encodeURIComponent(wig.name)}`}
+              href={`https://wa.me/2348000000000?text=Hi%20I'm%20interested%20in%20${encodeURIComponent(product.name)}`}
               variant="gold"
               size="lg"
               fullWidth
@@ -149,13 +243,33 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Reviews */}
+      {reviews.length > 0 && (
+        <section className="bg-offwhite py-12">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+            <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Reviews</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {reviews.slice(0, 6).map(r => (
+                <div key={r.id} className="p-5 bg-pearl rounded-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-semibold text-burgundy">{r.customer_name ?? 'Anonymous'}</div>
+                    <div className="text-gold-600 text-sm">★ {r.rating}</div>
+                  </div>
+                  {r.comment && <p className="text-sm text-burgundy/80">{r.comment}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Related */}
       {related.length > 0 && (
         <section className="bg-pearl py-16 lg:py-24">
           <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
             <h2 className="font-display uppercase text-burgundy text-4xl lg:text-5xl mb-8 display-shadow">You May Also Love</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {related.map((w, i) => <ProductCard key={w.id} wig={w} index={i} />)}
+              {related.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
             </div>
           </div>
         </section>
@@ -163,5 +277,32 @@ const ProductDetail: React.FC = () => {
     </div>
   )
 }
+
+const Picker: React.FC<{
+  label:    string
+  options:  string[]
+  value:    string | null
+  onChange: (v: string) => void
+}> = ({ label, options, value, onChange }) => (
+  <div>
+    <div className="text-[10px] tracking-[0.2em] uppercase text-burgundy/60 font-bold mb-2">{label}</div>
+    <div className="flex flex-wrap gap-2">
+      {options.map(opt => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className={`text-xs px-3 py-1.5 rounded-full border transition ${
+            value === opt
+              ? 'bg-burgundy text-offwhite border-burgundy'
+              : 'bg-pearl text-burgundy border-burgundy/20 hover:border-burgundy'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  </div>
+)
 
 export default ProductDetail

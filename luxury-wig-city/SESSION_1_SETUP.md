@@ -52,12 +52,14 @@ cp .env.example .env.local
 
 ## Step 3 — Run the migrations
 
-Three files in `supabase/migrations/`. Run them in order via the SQL editor:
+Five files in `supabase/migrations/`. Run them in order via the SQL editor:
 
 1. Go to **SQL Editor → New query**
 2. Open `supabase/migrations/20260430000001_initial_schema.sql` from this project, copy the whole file, paste into the editor, click **Run**. Should see "Success. No rows returned." Wait for it to complete (~5 seconds).
 3. Open `supabase/migrations/20260430000002_rls_policies.sql`, paste, run.
 4. Open `supabase/migrations/20260430000003_storage_and_seed.sql`, paste, run.
+5. Open `supabase/migrations/20260430000004_security_patches.sql`, paste, run.
+6. Open `supabase/migrations/20260430000005_filter_attributes.sql`, paste, run. *(adds the scalar columns the storefront filter sidebar needs: `texture`, `length_inches`, `density`, `lace_type`, `primary_color`, `hair_type`, `badge`)*
 
 Verify under **Table Editor** — you should see 16 tables and 4 storage buckets.
 
@@ -112,16 +114,39 @@ Visit `localhost:5173/account`, register a test customer, sign in. The Welcome B
 
 ---
 
-## What's next — Session 2
+## Session 2 — already wired (frontend)
 
-Once Session 1 is live, Session 2 wires the marketplace core to real data:
+Session 2 is shipped on the frontend. Once Session 1 is live the storefront will start reading and writing real data immediately:
 
-- Replace `src/data/wigs.ts` mock data with `useQuery(supabase.from('products')...)` everywhere
-- Shop page: real-time filtering and search via the `search_vector` column we set up
-- Product detail: real reviews, real stock, "add to cart" actually inserts a `cart_items` row
-- Cart: live `useQuery` against `cart_items` for current user, qty mutations
-- Checkout: creates real `orders` row, splits multi-vendor carts into N orders, integrates Flutterwave inline checkout
-- Order confirmation page reads real order
-- Order tracking page reads real `tracking_updates`
+- `src/lib/queries.ts` — read hooks: `useProducts`, `useProduct`, `useProductReviews`, `useCart`, `useMyOrders`, `useMyWishlist`, `useAdminStats/Orders/Products/Customers`
+- `src/lib/mutations.ts` — write hooks: `useAddToCart`, `useUpdateCartQty`, `useRemoveCartItem`, `useCreateOrder` (splits multi-vendor carts into N `orders` rows)
+- Pages wired: Home, Shop (filters + search via `search_vector`), ProductDetail (variants + reviews + add-to-cart), Cart, Checkout (real order creation), Account (orders/wishlist/looks panels), Admin (role-gated, Realtime-subscribed)
+- `src/data/wigs.ts` retired — all consumers go through Supabase
 
-Tell me when you've got Step 1-5 done and I'll ship Session 2.
+## Session 2 seed (one-shot SQL)
+
+To populate the catalogue with 8 starter wigs (the curated set from the original mock data) so the storefront isn't empty on first run, paste this into **SQL Editor → New query** after Step 5 above. Run it once a vendor profile exists, or use the `is_platform_product` flag with `vendor_id = null`:
+
+```sql
+-- Optional starter catalogue — replace with real vendor uploads later.
+insert into public.products
+  (name, description, price, discount_price, category, lengths, cap_sizes, colors,
+   texture, length_inches, density, lace_type, primary_color, hair_type, badge,
+   stock, status, is_featured, is_platform_product, vendor_name)
+values
+  ('Abuja Silk',          'Ultra-glossy bone straight, hand-tied 13x6 HD frontal.',                                285000, 315000, 'Bone Straight', '{}','{}','{}', 'Straight', 26, 200, '13x6 HD Lace', 'Natural Black', 'Human Hair',     'Bestseller',     5, 'active', true,  true, 'Adaeze Hair Co.'),
+  ('Lagos Bone Straight', 'Signature bone straight with mirror-shine finish.',                                     215000, null,   'Bone Straight', '{}','{}','{}', 'Straight', 22, 180, '13x4 HD Lace', 'Natural Black', 'Human Hair',     'Bestseller',     5, 'active', true,  true, 'Chiamaka Hair'),
+  ('Wuse Pixie Curls',    'Bouncy pixie curls with all-day hold. Glueless wear-and-go.',                           165000, null,   'Pixie Curl',    '{}','{}','{}', 'Curly',    14, 180, '5x5 Closure',  'Natural Black', 'Human Hair',     'New',            5, 'active', false, true, 'Folake Beauty'),
+  ('Bohemian Dream',      'Cascading bohemian curls. The wedding-season favourite.',                               245000, null,   'Frontal Wigs',  '{}','{}','{}', 'Curly',    24, 200, '13x6 HD Lace', 'Natural Black', 'Human Hair',     'Editor''s Pick', 5, 'active', true,  true, 'Adaeze Hair Co.'),
+  ('Asaba Honey',         'Sun-kissed honey blonde body wave. Hand-painted highlights.',                           195000, null,   'Closure Wigs',  '{}','{}','{}', 'Wavy',     20, 180, '5x5 Closure',  'Honey Blonde',  'Human Hair',     null,             5, 'active', false, true, 'Nneka Wigs Ltd.'),
+  ('Royal Burgundy',      'Custom-coloured burgundy. Limited monthly drop.',                                       275000, null,   'Frontal Wigs',  '{}','{}','{}', 'Straight', 24, 200, '13x4 HD Lace', 'Burgundy',      'Human Hair',     'Limited',        5, 'active', true,  true, 'Chiamaka Hair'),
+  ('Queen Braids',        'Box-braided full lace wig. Pre-installed, glueless.',                                   145000, null,   'Braided Wigs',  '{}','{}','{}', 'Kinky',    28, 150, 'Full Lace',    'Natural Black', 'Synthetic Blend', null,            5, 'active', false, true, 'Folake Beauty'),
+  ('Nile Waves',          'Soft Egyptian-inspired body wave. Hand-tied frontal. Bridal-grade luxury.',             225000, null,   'Frontal Wigs',  '{}','{}','{}', 'Wavy',     26, 200, '13x6 HD Lace', 'Natural Black', 'Human Hair',     null,             5, 'active', true,  true, 'Adaeze Hair Co.');
+```
+
+## What's next
+
+- **Phase 4 — Payments**: swap `Checkout.tsx` payment radios for real Paystack / Flutterwave inline checkout (currently orders go in with `payment_status = 'pending'`).
+- **Phase 3 — AI Try-On**: Edge Function calling Replicate / fal.ai, save outputs to `user_wigs`.
+- **Admin product CRUD**: `+ Add Wig` modal, image upload to `product-images` bucket.
+- **Tests + CI**: Vitest smoke tests, GitHub Actions for typecheck + build.

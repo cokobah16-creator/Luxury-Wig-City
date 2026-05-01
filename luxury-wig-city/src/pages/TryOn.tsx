@@ -1,11 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
-import { wigs } from '../data/wigs'
+import { useProducts } from '../lib/queries'
+import { formatNaira } from '../lib/supabase'
+import type { Product } from '../lib/database.types'
 
 const TryOn: React.FC = () => {
+  const { data: products = [] } = useProducts({ limit: 12 })
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
-  const [selectedWig, setSelectedWig] = useState(wigs[0])
+  const [selectedWig, setSelectedWig]     = useState<Product | null>(null)
+
+  // Auto-pick the first wig once the list loads.
+  useEffect(() => {
+    if (!selectedWig && products.length > 0) setSelectedWig(products[0])
+  }, [products, selectedWig])
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -56,7 +64,7 @@ const TryOn: React.FC = () => {
                 {/* Overlay AI processing visualization */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-burgundy/90 backdrop-blur-md text-offwhite px-6 py-3 rounded-full font-display uppercase text-sm tracking-wider">
-                    Wig Match: {selectedWig.name}
+                    Wig Match: {selectedWig?.name ?? 'Pick a wig'}
                   </div>
                 </div>
                 {/* Stylized wig overlay - placeholder */}
@@ -85,26 +93,36 @@ const TryOn: React.FC = () => {
         {/* WIG SELECTION PANEL */}
         <div className="lg:col-span-4">
           <h2 className="font-display uppercase text-burgundy text-2xl mb-4">Choose a Wig</h2>
-          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-            {wigs.map(wig => (
-              <button
-                key={wig.id}
-                onClick={() => setSelectedWig(wig)}
-                className={`w-full flex items-center gap-3 p-3 rounded-sm border-2 transition text-left ${
-                  selectedWig.id === wig.id ? 'border-burgundy bg-pearl' : 'border-transparent bg-pearl/50 hover:border-burgundy/30'
-                }`}
-              >
-                <div className="w-16 h-20 bg-burgundy rounded-sm shrink-0 flex items-center justify-center overflow-hidden">
-                  <Logo size={50} variant="mono-gold" className="opacity-70" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-burgundy">{wig.name}</div>
-                  <div className="text-xs text-burgundy/60 mt-0.5">{wig.category} · {wig.length}"</div>
-                  <div className="text-xs text-gold-600 font-bold mt-1">₦{wig.price.toLocaleString()}</div>
-                </div>
-              </button>
-            ))}
-          </div>
+          {products.length === 0 ? (
+            <div className="text-sm font-serif italic text-burgundy/50 p-4 bg-pearl/50 rounded-sm">
+              Wigs will appear here once the catalogue is connected.
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+              {products.map(wig => (
+                <button
+                  key={wig.id}
+                  onClick={() => setSelectedWig(wig)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-sm border-2 transition text-left ${
+                    selectedWig?.id === wig.id ? 'border-burgundy bg-pearl' : 'border-transparent bg-pearl/50 hover:border-burgundy/30'
+                  }`}
+                >
+                  <div className="w-16 h-20 bg-burgundy rounded-sm shrink-0 flex items-center justify-center overflow-hidden">
+                    {wig.images?.[0]
+                      ? <img src={wig.images[0]} alt="" className="w-full h-full object-cover" />
+                      : <Logo size={50} variant="mono-gold" className="opacity-70" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-burgundy">{wig.name}</div>
+                    <div className="text-xs text-burgundy/60 mt-0.5">
+                      {wig.category}{wig.length_inches ? ` · ${wig.length_inches}"` : ''}
+                    </div>
+                    <div className="text-xs text-gold-600 font-bold mt-1">{formatNaira(wig.price)}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

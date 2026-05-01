@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
 import { useAuth } from '../contexts/AuthContext'
+import { useMyOrders, useMyWishlist } from '../lib/queries'
+import { formatNaira } from '../lib/supabase'
+import type { OrderStatus } from '../lib/database.types'
 
 const Account: React.FC = () => {
   const { user, profile, vendorProfile, loading, signIn, signUp, signInWithGoogle, signInWithMagicLink, signOut, isAdmin, isVendor } = useAuth()
@@ -71,13 +74,9 @@ const Account: React.FC = () => {
           </aside>
 
           <main className="lg:col-span-9">
-            <div className="bg-pearl p-10 rounded-sm text-center">
-              <Logo size={80} variant="mono-burgundy" className="mx-auto mb-4 opacity-50" />
-              <h2 className="font-display uppercase text-burgundy text-3xl mb-2">{view === 'orders' ? 'Order History' : view === 'saved' ? 'Saved Wigs' : 'Try-On Looks'}</h2>
-              <p className="font-serif italic text-burgundy/60">
-                Real data wires up in Session 2.
-              </p>
-            </div>
+            {view === 'orders' && <OrdersPanel  userId={user.id} />}
+            {view === 'saved'  && <WishlistPanel userId={user.id} />}
+            {view === 'looks'  && <LooksPanel    />}
           </main>
         </div>
       </div>
@@ -168,5 +167,97 @@ const Account: React.FC = () => {
     </div>
   )
 }
+
+// ── Logged-in dashboard panels ────────────────────────────────────────
+
+const statusPill: Record<OrderStatus, string> = {
+  pending:           'bg-orange-100 text-orange-800',
+  confirmed:         'bg-gold/20 text-gold-700',
+  admin_confirmed:   'bg-gold/20 text-gold-700',
+  packed:            'bg-burgundy/15 text-burgundy',
+  dispatched:        'bg-burgundy/15 text-burgundy',
+  out_for_delivery:  'bg-burgundy/15 text-burgundy',
+  delivered:         'bg-green-100 text-green-800',
+  cancelled:         'bg-red-100 text-red-800'
+}
+
+const OrdersPanel: React.FC<{ userId: string }> = ({ userId }) => {
+  const { data: orders = [], isLoading } = useMyOrders(userId)
+  return (
+    <div>
+      <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Order History</h2>
+      {isLoading ? (
+        <PanelSkeleton />
+      ) : orders.length === 0 ? (
+        <EmptyPanel title="No orders yet" cta="Shop Wigs" to="/shop" />
+      ) : (
+        <div className="space-y-3">
+          {orders.map(o => (
+            <div key={o.id} className="bg-offwhite border border-burgundy/10 rounded-sm p-4 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="text-xs text-burgundy/60 tracking-widest uppercase">#{o.id.slice(0, 8).toUpperCase()}</div>
+                <div className="font-display uppercase text-burgundy text-lg">{formatNaira(Number(o.total_amount))}</div>
+                <div className="text-xs text-burgundy/60 mt-0.5">
+                  {o.items.length} item(s){o.vendor_name ? ` · ${o.vendor_name}` : ''} · {new Date(o.created_at).toLocaleDateString()}
+                </div>
+              </div>
+              <span className={`text-[10px] px-2 py-1 rounded font-semibold uppercase tracking-wider ${statusPill[o.status]}`}>
+                {o.status.replace(/_/g, ' ')}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const WishlistPanel: React.FC<{ userId: string }> = ({ userId }) => {
+  const { data: items = [], isLoading } = useMyWishlist(userId)
+  return (
+    <div>
+      <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Saved Wigs</h2>
+      {isLoading ? (
+        <PanelSkeleton />
+      ) : items.length === 0 ? (
+        <EmptyPanel title="No saved wigs yet" cta="Browse Shop" to="/shop" />
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-3">
+          {items.map(it => (
+            <Link key={it.id} to={`/shop/${it.product_id}`} className="bg-offwhite border border-burgundy/10 rounded-sm p-4 hover:border-burgundy">
+              <div className="font-display uppercase text-burgundy text-lg">{it.product_name ?? 'Wig'}</div>
+              {it.product_price != null && (
+                <div className="text-sm text-gold-600 font-bold">{formatNaira(Number(it.product_price))}</div>
+              )}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const LooksPanel: React.FC = () => (
+  <div>
+    <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Try-On Looks</h2>
+    <EmptyPanel title="Saved AI looks land in Phase 3" cta="Try On Now" to="/try-on" />
+  </div>
+)
+
+const PanelSkeleton: React.FC = () => (
+  <div className="space-y-3">
+    {Array.from({ length: 3 }).map((_, i) => (
+      <div key={i} className="h-20 bg-pearl rounded-sm animate-pulse" />
+    ))}
+  </div>
+)
+
+const EmptyPanel: React.FC<{ title: string; cta: string; to: string }> = ({ title, cta, to }) => (
+  <div className="bg-pearl p-10 rounded-sm text-center">
+    <Logo size={80} variant="mono-burgundy" className="mx-auto mb-4 opacity-50" />
+    <h3 className="font-display uppercase text-burgundy text-2xl mb-4">{title}</h3>
+    <Button to={to} variant="primary" size="md">{cta}</Button>
+  </div>
+)
 
 export default Account
