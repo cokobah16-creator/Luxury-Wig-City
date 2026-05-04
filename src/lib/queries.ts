@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
 import { useAuth } from '../contexts/AuthContext'
-import type { Product, CartItem, Order, Review, WishlistItem, UserWig, Announcement } from './database.types'
+import type { Product, CartItem, Order, Review, WishlistItem, UserWig, Announcement, TryOnResult } from './database.types'
 
 // ── Products ─────────────────────────────────────────────────────────────────
 
@@ -184,6 +184,40 @@ export function useMyOrders() {
   })
 }
 
+export function useVendorOrders() {
+  const { vendorProfile } = useAuth()
+  return useQuery({
+    queryKey: ['vendor', 'orders', vendorProfile?.id],
+    queryFn: async () => {
+      if (!vendorProfile) return []
+      const { data, error } = await supabase
+        .from('orders').select('*')
+        .eq('vendor_id', vendorProfile.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as Order[]
+    },
+    enabled: !!vendorProfile
+  })
+}
+
+export function useVendorProducts() {
+  const { vendorProfile } = useAuth()
+  return useQuery({
+    queryKey: ['vendor', 'products', vendorProfile?.id],
+    queryFn: async () => {
+      if (!vendorProfile) return []
+      const { data, error } = await supabase
+        .from('products').select('*')
+        .eq('vendor_id', vendorProfile.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as Product[]
+    },
+    enabled: !!vendorProfile
+  })
+}
+
 export function useAdminOrders() {
   return useQuery({
     queryKey: ['admin', 'orders'],
@@ -235,6 +269,23 @@ export function useWishlist() {
         .order('created_at', { ascending: false })
       if (error) throw error
       return (data ?? []) as WishlistItem[]
+    },
+    enabled: !!user
+  })
+}
+
+export function useMyTryOns() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['try-ons', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      const { data, error } = await supabase
+        .from('try_on_results').select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as TryOnResult[]
     },
     enabled: !!user
   })

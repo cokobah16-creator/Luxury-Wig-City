@@ -304,9 +304,9 @@ const ProductDetail: React.FC = () => {
             <Button variant="primary" size="lg" fullWidth onClick={handleAddToCart} disabled={addToCart.isPending}>
               {addToCart.isPending ? 'Adding…' : 'Add to Cart'}
             </Button>
-            <Button to="/try-on" variant="secondary" size="lg" fullWidth>
+            <Button to={`/try-on?product=${product.id}`} variant="secondary" size="lg" fullWidth>
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6L12 2z"/></svg>
-              Try This Wig (AI)
+              Try It On With AI
             </Button>
             <Button
               href={waLink(`Hi I'm interested in ${product.name}`)}

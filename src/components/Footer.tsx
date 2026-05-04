@@ -121,6 +121,7 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="text-[11px] tracking-[0.2em] uppercase text-gold font-bold mb-5">Brand</div>
             <ul className="space-y-3 text-sm">
+              <li><Link to="/sell-with-us" className="hover:text-gold transition">Sell with us</Link></li>
               <li><a href="#" className="hover:text-gold transition">Our Story</a></li>
               <li><a href="#" className="hover:text-gold transition">Press</a></li>
               <li><a href="#" className="hover:text-gold transition">Privacy</a></li>
