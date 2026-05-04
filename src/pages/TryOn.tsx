@@ -61,6 +61,11 @@ const TryOn: React.FC = () => {
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)) {
+      alert('HEIC photos aren\'t supported in this browser. Please use JPG, PNG or WebP — or change your iPhone setting: Settings → Camera → Formats → Most Compatible.')
+      e.target.value = ''
+      return
+    }
     setPhoto(file)
     setPhotoPreview(URL.createObjectURL(file))
     setStep('wig')
@@ -302,7 +307,7 @@ const PhotoUploader: React.FC<{
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic"
+        accept="image/jpeg,image/png,image/webp"
         onChange={onPhoto}
         className="sr-only"
       />
