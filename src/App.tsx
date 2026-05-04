@@ -11,6 +11,9 @@ import Location from './pages/Location'
 import Contact from './pages/Contact'
 import Account from './pages/Account'
 import Admin from './pages/Admin'
+import OrderTracking from './pages/OrderTracking'
+import SellWithUs from './pages/SellWithUs'
+import Vendor from './pages/Vendor'
 
 const App: React.FC = () => (
   <Routes>
@@ -24,6 +27,9 @@ const App: React.FC = () => (
       <Route path="/location" element={<Location />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/account" element={<Account />} />
+      <Route path="/orders/:id" element={<OrderTracking />} />
+      <Route path="/sell-with-us" element={<SellWithUs />} />
+      <Route path="/vendor" element={<Vendor />} />
       <Route path="/admin" element={<Admin />} />
     </Route>
   </Routes>

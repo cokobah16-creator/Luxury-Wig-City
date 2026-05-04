@@ -2,6 +2,8 @@ import React from 'react'
 import { Logo } from '../components/Logo'
 import { Wordmark } from '../components/Wordmark'
 import { Button } from '../components/Button'
+import { waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const zones = [
   { name: 'Wuse · Maitama · Asokoro', time: 'Same-day', fee: 'Free above ₦150K' },
@@ -13,6 +15,10 @@ const zones = [
 ]
 
 const Location: React.FC = () => {
+  useSeo({
+    title: 'Showroom & Delivery',
+    description: 'Visit our Abuja showroom or check delivery zones across Nigeria — same-day in central Abuja, 24–72 hours nationwide.'
+  })
   return (
     <div className="bg-offwhite">
       {/* Hero — recreating the LOCATION poster from brand kit */}
@@ -78,7 +84,7 @@ const Location: React.FC = () => {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button variant="primary" size="md">Book Consultation</Button>
-              <Button href="https://wa.me/2348000000000" variant="secondary" size="md">
+              <Button href={waLink()} variant="secondary" size="md">
                 WhatsApp Us
               </Button>
             </div>

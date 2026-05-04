@@ -38,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   disabled = false
 }) => {
-  const cls = `inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase transition-all duration-300 ${
+  const cls = `inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-offwhite ${
     variants[variant]
   } ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`
 

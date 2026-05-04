@@ -1,9 +1,22 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Wordmark } from './Wordmark'
+import { waLink } from '../lib/constants'
+import { useSubscribeNewsletter } from '../lib/mutations'
 
 export const Footer: React.FC = () => {
+  const [email, setEmail] = useState('')
+  const subscribe = useSubscribeNewsletter()
+
+  const onSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await subscribe.mutateAsync({ email })
+      setEmail('')
+    } catch { /* toast handled in mutation */ }
+  }
+
   return (
     <footer className="bg-burgundy text-offwhite/85 pt-20 pb-8 mt-20 relative overflow-hidden">
       {/* Brand pattern overlay */}
@@ -19,11 +32,38 @@ export const Footer: React.FC = () => {
 
       <div className="relative max-w-[1400px] mx-auto px-6 lg:px-10">
         {/* Top — big tagline */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <Wordmark size="md" color="gold" className="mx-auto" />
           <p className="font-display uppercase text-3xl sm:text-4xl text-gold mt-6 tracking-wider display-shadow">
             Your Hair's BFF
           </p>
+        </div>
+
+        {/* Newsletter */}
+        <div className="max-w-xl mx-auto text-center mb-16">
+          <div className="text-[11px] tracking-[0.3em] uppercase text-gold font-bold mb-3">— Join the list —</div>
+          <p className="text-sm text-offwhite/80 mb-5">
+            Drops, restocks, flash sales. No spam — just the good stuff.
+          </p>
+          <form onSubmit={onSubscribe} className="flex flex-col sm:flex-row gap-2">
+            <label className="sr-only" htmlFor="newsletter-email">Email</label>
+            <input
+              id="newsletter-email"
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="flex-1 px-5 py-3 rounded-full bg-offwhite/10 text-offwhite placeholder-offwhite/50 border border-offwhite/20 focus:border-gold outline-none"
+            />
+            <button
+              type="submit"
+              disabled={subscribe.isPending}
+              className="px-6 py-3 rounded-full bg-gold text-burgundy font-semibold uppercase text-xs tracking-[0.18em] hover:bg-gold-300 transition disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-burgundy"
+            >
+              {subscribe.isPending ? 'Joining…' : 'Subscribe'}
+            </button>
+          </form>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 mb-16">
@@ -40,7 +80,7 @@ export const Footer: React.FC = () => {
               <a href="https://instagram.com/luxurywigcity" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-offwhite/10 hover:bg-gold hover:text-burgundy flex items-center justify-center transition">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 5.2c2.5 0 4.6 2.1 4.6 4.6s-2.1 4.6-4.6 4.6S7.4 14.5 7.4 12 9.5 7.4 12 7.4zm0 1.8c-1.5 0-2.8 1.3-2.8 2.8s1.3 2.8 2.8 2.8 2.8-1.3 2.8-2.8-1.3-2.8-2.8-2.8zm5.8-2.2c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1.5-1.1 1.1-1.1 1.1.5 1.1 1.1z"/></svg>
               </a>
-              <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-offwhite/10 hover:bg-gold hover:text-burgundy flex items-center justify-center transition">
+              <a href={waLink()} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-offwhite/10 hover:bg-gold hover:text-burgundy flex items-center justify-center transition">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2 3 4.8 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4zM12 22c-1.7 0-3.4-.5-4.9-1.4L3 22l1.4-4.1C3.5 16.4 3 14.7 3 13c0-5 4-9 9-9s9 4 9 9-4 9-9 9z"/></svg>
               </a>
               <a href="#" className="w-9 h-9 rounded-full bg-offwhite/10 hover:bg-gold hover:text-burgundy flex items-center justify-center transition">
@@ -66,7 +106,7 @@ export const Footer: React.FC = () => {
               <li><Link to="/try-on" className="hover:text-gold transition">AI Try-On</Link></li>
               <li><Link to="/location" className="hover:text-gold transition">Visit Showroom</Link></li>
               <li><Link to="/contact" className="hover:text-gold transition">Book Consultation</Link></li>
-              <li><a href="https://wa.me/2348000000000" className="hover:text-gold transition">WhatsApp Order</a></li>
+              <li><a href={waLink()} className="hover:text-gold transition">WhatsApp Order</a></li>
             </ul>
           </div>
           <div className="lg:col-span-2">
@@ -81,6 +121,7 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="text-[11px] tracking-[0.2em] uppercase text-gold font-bold mb-5">Brand</div>
             <ul className="space-y-3 text-sm">
+              <li><Link to="/sell-with-us" className="hover:text-gold transition">Sell with us</Link></li>
               <li><a href="#" className="hover:text-gold transition">Our Story</a></li>
               <li><a href="#" className="hover:text-gold transition">Press</a></li>
               <li><a href="#" className="hover:text-gold transition">Privacy</a></li>

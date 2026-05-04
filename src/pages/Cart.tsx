@@ -2,23 +2,42 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
+import { CartItemSkeleton, Skeleton } from '../components/Skeleton'
 import { useCart } from '../lib/queries'
 import { useUpdateCartQty, useRemoveCartItem } from '../lib/mutations'
 import { formatNaira } from '../lib/supabase'
+import { calcDelivery, waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const Cart: React.FC = () => {
+  useSeo({ title: 'Your Bag', noIndex: true })
   const { data: items = [], isLoading } = useCart()
   const updateQty  = useUpdateCartQty()
   const removeItem = useRemoveCartItem()
 
   const subtotal = items.reduce((s, i) => s + Number(i.price) * i.quantity, 0)
-  const delivery  = subtotal > 150000 ? 0 : 5000
+  const delivery  = calcDelivery(subtotal)
   const total     = subtotal + delivery
 
   if (isLoading) {
     return (
-      <div className="bg-offwhite min-h-screen flex items-center justify-center">
-        <Logo size={80} variant="mono-burgundy" className="opacity-30 animate-pulse" />
+      <div className="bg-offwhite min-h-screen">
+        <section className="bg-burgundy text-offwhite py-14">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+            <div className="text-[11px] tracking-[0.3em] uppercase text-gold font-bold mb-3">— Your Bag —</div>
+            <h1 className="font-display uppercase text-gold text-5xl lg:text-7xl tracking-tight display-shadow">Cart</h1>
+          </div>
+        </section>
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-4" aria-busy="true" aria-label="Loading cart">
+            <CartItemSkeleton />
+            <CartItemSkeleton />
+            <CartItemSkeleton />
+          </div>
+          <aside className="lg:col-span-4">
+            <Skeleton className="h-72 w-full" />
+          </aside>
+        </div>
       </div>
     )
   }
@@ -49,7 +68,7 @@ const Cart: React.FC = () => {
                   <div key={item.id} className="flex gap-4 p-4 bg-pearl rounded-sm">
                     <Link to={`/shop/${item.product_id}`} className="w-24 h-32 bg-burgundy rounded-sm shrink-0 flex items-center justify-center overflow-hidden">
                       {item.product_image
-                        ? <img src={item.product_image} alt={item.product_name ?? ''} className="w-full h-full object-cover" />
+                        ? <img src={item.product_image} alt={item.product_name ?? ''} loading="lazy" decoding="async" width={96} height={128} className="w-full h-full object-cover" />
                         : <Logo size={60} variant="mono-gold" className="opacity-70" />
                       }
                     </Link>
@@ -97,7 +116,7 @@ const Cart: React.FC = () => {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
               </Button>
               <div className="mt-4 text-center text-offwhite/70 text-xs">— or —</div>
-              <Button href="https://wa.me/2348000000000?text=I%20want%20to%20order%20from%20my%20cart" variant="secondary" size="lg" fullWidth className="mt-4 !text-gold !border-gold/40 hover:!bg-gold hover:!text-burgundy">
+              <Button href={waLink('I want to order from my cart')} variant="secondary" size="lg" fullWidth className="mt-4 !text-gold !border-gold/40 hover:!bg-gold hover:!text-burgundy">
                 Order via WhatsApp
               </Button>
             </div>

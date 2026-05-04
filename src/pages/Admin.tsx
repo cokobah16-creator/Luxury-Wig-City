@@ -7,6 +7,7 @@ import { useAdminStats, useAdminOrders } from '../lib/queries'
 import { supabase } from '../lib/supabase'
 import { formatNaira } from '../lib/supabase'
 import { useQueryClient } from '@tanstack/react-query'
+import { useSeo } from '../lib/useSeo'
 
 const statusColors: Record<string, string> = {
   pending:          'bg-gold/20 text-gold-700',
@@ -20,6 +21,7 @@ const statusColors: Record<string, string> = {
 }
 
 const Admin: React.FC = () => {
+  useSeo({ title: 'Admin', noIndex: true })
   const { isAdmin, loading } = useAuth()
   const [view, setView] = useState<'overview' | 'orders' | 'delivery'>('overview')
   const qc = useQueryClient()

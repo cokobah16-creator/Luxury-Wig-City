@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders/
+Disallow: /vendor
+
+Sitemap: https://luxurywigcity.com/sitemap.xml

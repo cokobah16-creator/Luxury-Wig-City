@@ -285,6 +285,35 @@ export interface UserWig {
   updated_at: string
 }
 
+export type TryOnStatus = 'pending' | 'complete' | 'failed'
+
+export interface TryOnResult {
+  id: string
+  user_id: string
+  product_id: string | null
+  product_name: string | null
+  source_url: string
+  generated_url: string | null
+  status: TryOnStatus
+  prompt: string | null
+  error_message: string | null
+  consent_given_at: string
+  expires_at: string
+  created_at: string
+  updated_at: string
+}
+
+export interface NewsletterSubscriber {
+  id: string
+  email: string
+  source: string | null
+  is_active: boolean
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+  unsubscribed_at: string | null
+}
+
 export interface CommunityPost {
   id: string
   user_id: string
@@ -321,6 +350,8 @@ export interface Database {
       custom_wig_requests:   { Row: CustomWigRequest;  Insert: Partial<CustomWigRequest>  & { customer_id: string }; Update: Partial<CustomWigRequest> }
       user_wigs:             { Row: UserWig;           Insert: Partial<UserWig>           & { user_id: string }; Update: Partial<UserWig> }
       community_posts:       { Row: CommunityPost;     Insert: Partial<CommunityPost>     & { user_id: string; photo_url: string }; Update: Partial<CommunityPost> }
+      newsletter_subscribers:{ Row: NewsletterSubscriber; Insert: Partial<NewsletterSubscriber> & { email: string }; Update: Partial<NewsletterSubscriber> }
+      try_on_results:        { Row: TryOnResult;        Insert: Partial<TryOnResult>        & { user_id: string; source_url: string }; Update: Partial<TryOnResult> }
     }
     Views: {}
     Functions: {

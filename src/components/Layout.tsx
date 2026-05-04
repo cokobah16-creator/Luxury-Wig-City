@@ -1,19 +1,31 @@
 import React from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
+import { ErrorBoundary } from './ErrorBoundary'
+import { waLink } from '../lib/constants'
 
-export const Layout: React.FC = () => (
+export const Layout: React.FC = () => {
+  const location = useLocation()
+  return (
   <div className="min-h-screen flex flex-col">
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-burgundy focus:text-gold focus:px-4 focus:py-2 focus:rounded-sm focus:text-sm focus:font-semibold"
+    >
+      Skip to content
+    </a>
     <Navbar />
-    <main className="flex-1">
-      <Outlet />
+    <main id="main-content" className="flex-1">
+      <ErrorBoundary key={location.pathname}>
+        <Outlet />
+      </ErrorBoundary>
     </main>
     <Footer />
 
     {/* WhatsApp floating CTA */}
     <a
-      href="https://wa.me/2348000000000?text=Hi%20Luxury%20Wig%20City"
+      href={waLink('Hi Luxury Wig City')}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-burgundy hover:bg-burgundy-700 rounded-full shadow-luxe flex items-center justify-center transition group"
@@ -25,6 +37,7 @@ export const Layout: React.FC = () => (
       <span className="absolute -top-1 -right-1 w-3 h-3 bg-gold rounded-full ring-2 ring-offwhite animate-pulse" />
     </a>
   </div>
-)
+  )
+}
 
 export default Layout

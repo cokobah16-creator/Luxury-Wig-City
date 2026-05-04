@@ -3,10 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
-import { useProduct, useProductReviews, useProducts } from '../lib/queries'
-import { useAddToCart } from '../lib/mutations'
+import { Skeleton } from '../components/Skeleton'
+import { Lightbox } from '../components/Lightbox'
+import { useSeo, useJsonLd } from '../lib/useSeo'
+import { useProduct, useProductReviews, useProducts, useCanReview, useMyReview } from '../lib/queries'
+import { useAddToCart, useAddReview } from '../lib/mutations'
 import { useAuth } from '../contexts/AuthContext'
 import { formatNaira } from '../lib/supabase'
+import { waLink } from '../lib/constants'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -21,17 +25,87 @@ const ProductDetail: React.FC = () => {
     limit: 4
   })
   const addToCart = useAddToCart()
+  const addReview = useAddReview()
+  const { data: canReview = false } = useCanReview(id)
+  const { data: myReview } = useMyReview(id)
 
   const [activeImage, setActiveImage] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [qty,         setQty]         = useState(1)
   const [length,      setLength]      = useState<string>('')
   const [capSize,     setCapSize]     = useState<string>('')
   const [color,       setColor]       = useState<string>('')
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+
+  useSeo({
+    title:       product?.name,
+    description: product?.description ?? undefined,
+    image:       product?.images?.[0] ?? null
+  })
+
+  useJsonLd('product', product ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description ?? undefined,
+    image: product.images ?? [],
+    sku: product.id,
+    category: product.category,
+    brand: product.vendor_name ? { '@type': 'Brand', name: product.vendor_name } : undefined,
+    offers: {
+      '@type': 'Offer',
+      url: typeof window !== 'undefined' ? window.location.href : undefined,
+      priceCurrency: 'NGN',
+      price: Number(product.discount_price ?? product.price),
+      availability: product.stock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition'
+    },
+    aggregateRating: product.review_count > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: Number(product.rating),
+      reviewCount: product.review_count
+    } : undefined
+  } : null)
+
+  useJsonLd('breadcrumb', product ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',     item: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined },
+      { '@type': 'ListItem', position: 2, name: 'Shop',     item: typeof window !== 'undefined' ? `${window.location.origin}/shop` : undefined },
+      { '@type': 'ListItem', position: 3, name: product.category, item: typeof window !== 'undefined' ? `${window.location.origin}/shop?cat=${encodeURIComponent(product.category)}` : undefined },
+      { '@type': 'ListItem', position: 4, name: product.name }
+    ]
+  } : null)
 
   if (isLoading) {
     return (
-      <div className="max-w-[1400px] mx-auto px-6 py-32 flex items-center justify-center">
-        <Logo size={80} variant="mono-burgundy" className="opacity-30 animate-pulse" />
+      <div className="bg-offwhite">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-8">
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 grid lg:grid-cols-2 gap-12" aria-busy="true" aria-label="Loading product">
+          <div className="space-y-3">
+            <Skeleton className="aspect-square w-full" />
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="aspect-square" />)}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-12 w-3/4" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-40 mt-4" />
+            <Skeleton className="h-24 w-full mt-4" />
+            <div className="grid sm:grid-cols-2 gap-3 mt-6">
+              <Skeleton className="h-12 w-full" rounded="full" />
+              <Skeleton className="h-12 w-full" rounded="full" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -75,9 +149,23 @@ const ProductDetail: React.FC = () => {
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 grid lg:grid-cols-2 gap-12">
         {/* GALLERY */}
         <div>
-          <div className="relative aspect-square bg-burgundy rounded-sm overflow-hidden mb-4">
+          <button
+            type="button"
+            onClick={() => images.length > 0 && setLightboxOpen(true)}
+            disabled={images.length === 0}
+            aria-label={images.length > 0 ? 'Open image gallery' : undefined}
+            className="relative aspect-square bg-burgundy rounded-sm overflow-hidden mb-4 w-full block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+          >
             {images[activeImage] ? (
-              <img src={images[activeImage]} alt={product.name} className="w-full h-full object-cover" />
+              <img
+                src={images[activeImage]}
+                alt={product.name}
+                loading="eager"
+                decoding="async"
+                width={800}
+                height={800}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
             ) : (
               <>
                 <div className="absolute inset-0 opacity-30" style={{
@@ -91,15 +179,24 @@ const ProductDetail: React.FC = () => {
                 {product.badge}
               </div>
             )}
-          </div>
+            {images.length > 0 && (
+              <div className="absolute bottom-4 right-4 w-9 h-9 rounded-full bg-burgundy/80 text-gold flex items-center justify-center opacity-0 group-hover:opacity-100 transition" aria-hidden="true">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>
+              </div>
+            )}
+          </button>
 
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
               {images.slice(0, 4).map((src, i) => (
-                <button key={i} onClick={() => setActiveImage(i)}
-                  className={`aspect-square rounded-sm overflow-hidden border-2 ${activeImage === i ? 'border-gold' : 'border-transparent'}`}
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`Show image ${i + 1}`}
+                  aria-current={activeImage === i || undefined}
+                  className={`aspect-square rounded-sm overflow-hidden border-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 ${activeImage === i ? 'border-gold' : 'border-transparent hover:border-burgundy/30'}`}
                 >
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <img src={src} alt="" loading="lazy" decoding="async" width={200} height={200} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -207,12 +304,12 @@ const ProductDetail: React.FC = () => {
             <Button variant="primary" size="lg" fullWidth onClick={handleAddToCart} disabled={addToCart.isPending}>
               {addToCart.isPending ? 'Adding…' : 'Add to Cart'}
             </Button>
-            <Button to="/try-on" variant="secondary" size="lg" fullWidth>
+            <Button to={`/try-on?product=${product.id}`} variant="secondary" size="lg" fullWidth>
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6L12 2z"/></svg>
-              Try This Wig (AI)
+              Try It On With AI
             </Button>
             <Button
-              href={`https://wa.me/2348000000000?text=Hi%20I'm%20interested%20in%20${encodeURIComponent(product.name)}`}
+              href={waLink(`Hi I'm interested in ${product.name}`)}
               variant="gold" size="lg" fullWidth className="sm:col-span-2"
             >
               Order via WhatsApp
@@ -228,22 +325,85 @@ const ProductDetail: React.FC = () => {
       </div>
 
       {/* Reviews */}
-      {reviews.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 border-t border-burgundy/10">
-          <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Customer Reviews</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 border-t border-burgundy/10">
+        <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Customer Reviews</h2>
+
+        {reviews.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
             {reviews.slice(0, 6).map(r => (
               <div key={r.id} className="bg-pearl p-5 rounded-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-burgundy text-sm">{r.customer_name ?? 'Customer'}</span>
-                  <span className="text-gold-600 text-xs">{'★'.repeat(r.rating)}</span>
+                  <span className="text-gold-600 text-xs" aria-label={`${r.rating} out of 5`}>{'★'.repeat(r.rating)}</span>
                 </div>
                 {r.comment && <p className="text-sm text-burgundy/70 font-serif italic">{r.comment}</p>}
               </div>
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="font-serif italic text-burgundy/60 mb-10">No reviews yet. Be the first.</p>
+        )}
+
+        {/* Submission form */}
+        {!user ? (
+          <div className="bg-pearl p-6 rounded-sm flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-burgundy/80">Sign in to leave a review.</p>
+            <Button to="/account" variant="primary" size="md">Sign in</Button>
+          </div>
+        ) : myReview ? (
+          <div className="bg-pearl p-6 rounded-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] tracking-[0.2em] uppercase text-burgundy/60 font-bold">Your review</span>
+              <span className="text-gold-600 text-sm" aria-label={`${myReview.rating} out of 5`}>{'★'.repeat(myReview.rating)}</span>
+            </div>
+            {myReview.comment && <p className="text-sm text-burgundy/80 font-serif italic">{myReview.comment}</p>}
+          </div>
+        ) : !canReview ? (
+          <div className="bg-pearl p-6 rounded-sm">
+            <p className="text-sm text-burgundy/70">Only verified purchasers can review this wig. Place an order and come back after delivery.</p>
+          </div>
+        ) : (
+          <form
+            onSubmit={async e => {
+              e.preventDefault()
+              if (!id) return
+              await addReview.mutateAsync({ productId: id, rating: reviewRating, comment: reviewComment })
+              setReviewComment('')
+            }}
+            className="bg-pearl p-6 rounded-sm max-w-2xl"
+          >
+            <div className="text-[11px] tracking-[0.2em] uppercase text-burgundy/70 font-bold mb-3">Rate this wig</div>
+            <div className="flex items-center gap-1 mb-5" role="radiogroup" aria-label="Rating">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={reviewRating === n}
+                  aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                  onClick={() => setReviewRating(n)}
+                  className={`text-3xl leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-sm ${n <= reviewRating ? 'text-gold-600' : 'text-burgundy/20 hover:text-gold-600/60'}`}
+                >★</button>
+              ))}
+            </div>
+            <label className="text-[11px] tracking-[0.2em] uppercase text-burgundy/70 font-bold">Comment (optional)</label>
+            <textarea
+              value={reviewComment}
+              onChange={e => setReviewComment(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder="What did you love? Anything to flag?"
+              className="w-full mt-2 px-4 py-3 border border-burgundy/20 rounded-sm bg-offwhite focus:border-burgundy outline-none"
+            />
+            <div className="mt-4">
+              <Button type="submit" variant="primary" size="md" disabled={addReview.isPending}>
+                {addReview.isPending ? 'Posting…' : 'Post review'}
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
+
 
       {/* Related */}
       {related.length > 0 && (
@@ -255,6 +415,16 @@ const ProductDetail: React.FC = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {lightboxOpen && images.length > 0 && (
+        <Lightbox
+          images={images}
+          alt={product.name}
+          index={activeImage}
+          onClose={() => setLightboxOpen(false)}
+          onIndexChange={setActiveImage}
+        />
       )}
     </div>
   )
