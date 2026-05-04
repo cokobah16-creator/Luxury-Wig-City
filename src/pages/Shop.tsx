@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ProductCard } from '../components/ProductCard'
 import { useProducts, type ProductFilters } from '../lib/queries'
+import { useSeo } from '../lib/useSeo'
 
 const categories = ['Bone Straight', 'Bouncy Hair', 'Pixie Curl', 'Closure Wigs', 'Frontal Wigs', 'Braided Wigs', 'Colored Wigs', 'Short Wigs', 'Custom Wigs']
 const textures   = ['Straight', 'Wavy', 'Curly', 'Kinky']
@@ -16,7 +17,17 @@ const colors    = ['Natural Black', 'Honey Blonde', 'Burgundy', 'Custom']
 
 const Shop: React.FC = () => {
   const [params, setParams] = useSearchParams()
-  const [selectedCat,          setSelectedCat]          = useState<string | null>(params.get('cat'))
+  const cat = params.get('cat')
+  const q = params.get('q')
+  useSeo({
+    title: q ? `Search: ${q}` : cat ? `${cat}` : 'Shop',
+    description: q
+      ? `Search results for "${q}" — premium wigs from vetted vendors.`
+      : cat
+      ? `Shop ${cat} — premium ${cat.toLowerCase()} wigs from vetted vendors. Free Abuja delivery on orders above ₦150,000.`
+      : 'Browse our full collection of premium wigs — bone straight, pixie curl, frontals, closures and more.'
+  })
+  const [selectedCat,          setSelectedCat]          = useState<string | null>(cat)
   const [selectedTextures,     setSelectedTextures]     = useState<string[]>([])
   const [selectedLengthBucket, setSelectedLengthBucket] = useState<string | null>(null)
   const [priceMax,             setPriceMax]             = useState(350000)

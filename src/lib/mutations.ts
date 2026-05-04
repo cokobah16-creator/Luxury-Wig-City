@@ -87,6 +87,51 @@ export function useRemoveCartItem() {
   })
 }
 
+// ── Newsletter ────────────────────────────────────────────────────────────────
+
+export function useSubscribeNewsletter() {
+  return useMutation({
+    mutationFn: async ({ email, source = 'footer' }: { email: string; source?: string }) => {
+      const trimmed = email.trim().toLowerCase()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) throw new Error('Enter a valid email')
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert({ email: trimmed, source })
+      if (error && !error.message.toLowerCase().includes('duplicate')) throw error
+    },
+    onSuccess: () => toast.success("You're on the list — welcome."),
+    onError: (e: Error) => toast.error(e.message)
+  })
+}
+
+// ── Review mutations ──────────────────────────────────────────────────────────
+
+export function useAddReview() {
+  const { user, profile } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ productId, rating, comment }: { productId: string; rating: number; comment: string }) => {
+      if (!user) throw new Error('Sign in to leave a review')
+      if (rating < 1 || rating > 5) throw new Error('Rating must be 1–5')
+      const { error } = await supabase.from('reviews').insert({
+        product_id:    productId,
+        customer_id:   user.id,
+        customer_name: profile?.full_name ?? null,
+        rating,
+        comment: comment.trim() || null
+      })
+      if (error) throw error
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['reviews', vars.productId] })
+      qc.invalidateQueries({ queryKey: ['my-review', user?.id, vars.productId] })
+      qc.invalidateQueries({ queryKey: ['product', vars.productId] })
+      toast.success('Review posted — thank you!')
+    },
+    onError: (e: Error) => toast.error(e.message)
+  })
+}
+
 // ── Order mutations ───────────────────────────────────────────────────────────
 
 export interface ShippingDetails {

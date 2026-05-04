@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useOrder } from '../lib/queries'
 import { supabase, formatNaira } from '../lib/supabase'
 import { waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 import type { OrderStatus } from '../lib/database.types'
 
 const TIMELINE: { status: OrderStatus; label: string; description: string }[] = [
@@ -31,6 +32,7 @@ const STATUS_INDEX: Record<OrderStatus, number> = {
 }
 
 const OrderTracking: React.FC = () => {
+  useSeo({ title: 'Track Order', noIndex: true })
   const { id } = useParams<{ id: string }>()
   const { user, loading: authLoading } = useAuth()
   const qc = useQueryClient()

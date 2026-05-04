@@ -4,8 +4,13 @@ import { Button } from '../components/Button'
 import { useProducts } from '../lib/queries'
 import { formatNaira } from '../lib/supabase'
 import type { Product } from '../lib/database.types'
+import { useSeo } from '../lib/useSeo'
 
 const TryOn: React.FC = () => {
+  useSeo({
+    title: 'AI Wig Try-On',
+    description: 'See yourself in any wig before you buy. Upload a photo, choose a style, and our AI shows you the look in seconds.'
+  })
   const [uploadedImage, setUploadedImage]   = useState<string | null>(null)
   const [selectedWig,   setSelectedWig]     = useState<Product | null>(null)
 

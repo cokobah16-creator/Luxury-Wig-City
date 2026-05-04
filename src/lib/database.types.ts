@@ -285,6 +285,17 @@ export interface UserWig {
   updated_at: string
 }
 
+export interface NewsletterSubscriber {
+  id: string
+  email: string
+  source: string | null
+  is_active: boolean
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+  unsubscribed_at: string | null
+}
+
 export interface CommunityPost {
   id: string
   user_id: string
@@ -321,6 +332,7 @@ export interface Database {
       custom_wig_requests:   { Row: CustomWigRequest;  Insert: Partial<CustomWigRequest>  & { customer_id: string }; Update: Partial<CustomWigRequest> }
       user_wigs:             { Row: UserWig;           Insert: Partial<UserWig>           & { user_id: string }; Update: Partial<UserWig> }
       community_posts:       { Row: CommunityPost;     Insert: Partial<CommunityPost>     & { user_id: string; photo_url: string }; Update: Partial<CommunityPost> }
+      newsletter_subscribers:{ Row: NewsletterSubscriber; Insert: Partial<NewsletterSubscriber> & { email: string }; Update: Partial<NewsletterSubscriber> }
     }
     Views: {}
     Functions: {

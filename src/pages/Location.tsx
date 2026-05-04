@@ -3,6 +3,7 @@ import { Logo } from '../components/Logo'
 import { Wordmark } from '../components/Wordmark'
 import { Button } from '../components/Button'
 import { waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const zones = [
   { name: 'Wuse · Maitama · Asokoro', time: 'Same-day', fee: 'Free above ₦150K' },
@@ -14,6 +15,10 @@ const zones = [
 ]
 
 const Location: React.FC = () => {
+  useSeo({
+    title: 'Showroom & Delivery',
+    description: 'Visit our Abuja showroom or check delivery zones across Nigeria — same-day in central Abuja, 24–72 hours nationwide.'
+  })
   return (
     <div className="bg-offwhite">
       {/* Hero — recreating the LOCATION poster from brand kit */}

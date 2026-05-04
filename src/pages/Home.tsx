@@ -6,6 +6,7 @@ import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
 import { useProducts } from '../lib/queries'
 import { waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const categories = [
   { name: 'Bone Straight', count: 26, slug: 'Bone+Straight' },
@@ -16,6 +17,7 @@ const categories = [
 ]
 
 const Home: React.FC = () => {
+  useSeo()
   const { data: bestSellers = [] } = useProducts({ sort: 'rating', limit: 4 })
 
   return (

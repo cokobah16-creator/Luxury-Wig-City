@@ -6,8 +6,10 @@ import { useCreateOrder } from '../lib/mutations'
 import { useAuth } from '../contexts/AuthContext'
 import { formatNaira } from '../lib/supabase'
 import { calcDelivery, NIGERIAN_PHONE_REGEX, EMAIL_REGEX } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const Checkout: React.FC = () => {
+  useSeo({ title: 'Checkout', noIndex: true })
   const { user, profile } = useAuth()
   const { data: cartItems = [] } = useCart()
   const createOrder = useCreateOrder()

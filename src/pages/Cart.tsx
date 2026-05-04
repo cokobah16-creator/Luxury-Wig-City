@@ -7,8 +7,10 @@ import { useCart } from '../lib/queries'
 import { useUpdateCartQty, useRemoveCartItem } from '../lib/mutations'
 import { formatNaira } from '../lib/supabase'
 import { calcDelivery, waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const Cart: React.FC = () => {
+  useSeo({ title: 'Your Bag', noIndex: true })
   const { data: items = [], isLoading } = useCart()
   const updateQty  = useUpdateCartQty()
   const removeItem = useRemoveCartItem()

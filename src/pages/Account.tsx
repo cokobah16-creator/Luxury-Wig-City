@@ -6,8 +6,10 @@ import { Button } from '../components/Button'
 import { useAuth } from '../contexts/AuthContext'
 import { useMyOrders, useWishlist, useUserWigs } from '../lib/queries'
 import { formatNaira } from '../lib/supabase'
+import { useSeo } from '../lib/useSeo'
 
 const Account: React.FC = () => {
+  useSeo({ title: 'My Account', noIndex: true })
   const { user, profile, vendorProfile, loading, signIn, signUp, signInWithGoogle, signInWithMagicLink, signOut, isAdmin, isVendor } = useAuth()
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<'login' | 'register' | 'magic'>('login')

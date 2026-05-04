@@ -5,8 +5,9 @@ import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
 import { Skeleton } from '../components/Skeleton'
 import { Lightbox } from '../components/Lightbox'
-import { useProduct, useProductReviews, useProducts } from '../lib/queries'
-import { useAddToCart } from '../lib/mutations'
+import { useSeo, useJsonLd } from '../lib/useSeo'
+import { useProduct, useProductReviews, useProducts, useCanReview, useMyReview } from '../lib/queries'
+import { useAddToCart, useAddReview } from '../lib/mutations'
 import { useAuth } from '../contexts/AuthContext'
 import { formatNaira } from '../lib/supabase'
 import { waLink } from '../lib/constants'
@@ -24,6 +25,9 @@ const ProductDetail: React.FC = () => {
     limit: 4
   })
   const addToCart = useAddToCart()
+  const addReview = useAddReview()
+  const { data: canReview = false } = useCanReview(id)
+  const { data: myReview } = useMyReview(id)
 
   const [activeImage, setActiveImage] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -31,6 +35,51 @@ const ProductDetail: React.FC = () => {
   const [length,      setLength]      = useState<string>('')
   const [capSize,     setCapSize]     = useState<string>('')
   const [color,       setColor]       = useState<string>('')
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+
+  useSeo({
+    title:       product?.name,
+    description: product?.description ?? undefined,
+    image:       product?.images?.[0] ?? null
+  })
+
+  useJsonLd('product', product ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description ?? undefined,
+    image: product.images ?? [],
+    sku: product.id,
+    category: product.category,
+    brand: product.vendor_name ? { '@type': 'Brand', name: product.vendor_name } : undefined,
+    offers: {
+      '@type': 'Offer',
+      url: typeof window !== 'undefined' ? window.location.href : undefined,
+      priceCurrency: 'NGN',
+      price: Number(product.discount_price ?? product.price),
+      availability: product.stock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition'
+    },
+    aggregateRating: product.review_count > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: Number(product.rating),
+      reviewCount: product.review_count
+    } : undefined
+  } : null)
+
+  useJsonLd('breadcrumb', product ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',     item: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined },
+      { '@type': 'ListItem', position: 2, name: 'Shop',     item: typeof window !== 'undefined' ? `${window.location.origin}/shop` : undefined },
+      { '@type': 'ListItem', position: 3, name: product.category, item: typeof window !== 'undefined' ? `${window.location.origin}/shop?cat=${encodeURIComponent(product.category)}` : undefined },
+      { '@type': 'ListItem', position: 4, name: product.name }
+    ]
+  } : null)
 
   if (isLoading) {
     return (
@@ -276,22 +325,85 @@ const ProductDetail: React.FC = () => {
       </div>
 
       {/* Reviews */}
-      {reviews.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 border-t border-burgundy/10">
-          <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Customer Reviews</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 border-t border-burgundy/10">
+        <h2 className="font-display uppercase text-burgundy text-3xl mb-6">Customer Reviews</h2>
+
+        {reviews.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
             {reviews.slice(0, 6).map(r => (
               <div key={r.id} className="bg-pearl p-5 rounded-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-burgundy text-sm">{r.customer_name ?? 'Customer'}</span>
-                  <span className="text-gold-600 text-xs">{'★'.repeat(r.rating)}</span>
+                  <span className="text-gold-600 text-xs" aria-label={`${r.rating} out of 5`}>{'★'.repeat(r.rating)}</span>
                 </div>
                 {r.comment && <p className="text-sm text-burgundy/70 font-serif italic">{r.comment}</p>}
               </div>
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="font-serif italic text-burgundy/60 mb-10">No reviews yet. Be the first.</p>
+        )}
+
+        {/* Submission form */}
+        {!user ? (
+          <div className="bg-pearl p-6 rounded-sm flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-burgundy/80">Sign in to leave a review.</p>
+            <Button to="/account" variant="primary" size="md">Sign in</Button>
+          </div>
+        ) : myReview ? (
+          <div className="bg-pearl p-6 rounded-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] tracking-[0.2em] uppercase text-burgundy/60 font-bold">Your review</span>
+              <span className="text-gold-600 text-sm" aria-label={`${myReview.rating} out of 5`}>{'★'.repeat(myReview.rating)}</span>
+            </div>
+            {myReview.comment && <p className="text-sm text-burgundy/80 font-serif italic">{myReview.comment}</p>}
+          </div>
+        ) : !canReview ? (
+          <div className="bg-pearl p-6 rounded-sm">
+            <p className="text-sm text-burgundy/70">Only verified purchasers can review this wig. Place an order and come back after delivery.</p>
+          </div>
+        ) : (
+          <form
+            onSubmit={async e => {
+              e.preventDefault()
+              if (!id) return
+              await addReview.mutateAsync({ productId: id, rating: reviewRating, comment: reviewComment })
+              setReviewComment('')
+            }}
+            className="bg-pearl p-6 rounded-sm max-w-2xl"
+          >
+            <div className="text-[11px] tracking-[0.2em] uppercase text-burgundy/70 font-bold mb-3">Rate this wig</div>
+            <div className="flex items-center gap-1 mb-5" role="radiogroup" aria-label="Rating">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={reviewRating === n}
+                  aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                  onClick={() => setReviewRating(n)}
+                  className={`text-3xl leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-sm ${n <= reviewRating ? 'text-gold-600' : 'text-burgundy/20 hover:text-gold-600/60'}`}
+                >★</button>
+              ))}
+            </div>
+            <label className="text-[11px] tracking-[0.2em] uppercase text-burgundy/70 font-bold">Comment (optional)</label>
+            <textarea
+              value={reviewComment}
+              onChange={e => setReviewComment(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder="What did you love? Anything to flag?"
+              className="w-full mt-2 px-4 py-3 border border-burgundy/20 rounded-sm bg-offwhite focus:border-burgundy outline-none"
+            />
+            <div className="mt-4">
+              <Button type="submit" variant="primary" size="md" disabled={addReview.isPending}>
+                {addReview.isPending ? 'Posting…' : 'Post review'}
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
+
 
       {/* Related */}
       {related.length > 0 && (

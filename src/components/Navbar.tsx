@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Wordmark } from './Wordmark'
-import { useCart } from '../lib/queries'
+import { useCart, useActiveAnnouncements } from '../lib/queries'
 
 const navLinks = [
   { to: '/',         label: 'Home' },
@@ -20,7 +20,9 @@ export const Navbar: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const { data: cartItems = [] } = useCart()
+  const { data: announcements = [] } = useActiveAnnouncements()
   const cartCount = cartItems.reduce((n, i) => n + i.quantity, 0)
+  const announcement = announcements[0]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -50,10 +52,18 @@ export const Navbar: React.FC = () => {
     <>
       {/* Top announcement strip */}
       <div className="bg-burgundy text-offwhite text-xs tracking-[0.18em] uppercase">
-        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-          <span className="font-medium">Free Abuja delivery on orders above ₦150,000</span>
-          <Link to="/shop" className="text-gold hover:underline ml-2">Shop now →</Link>
+        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-center gap-3 text-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+          <span className="font-medium">
+            {announcement?.text ?? 'Free Abuja delivery on orders above ₦150,000'}
+          </span>
+          {announcement?.link_url ? (
+            announcement.link_url.startsWith('http')
+              ? <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline ml-2 shrink-0">{announcement.link_text ?? 'Learn more'} →</a>
+              : <Link to={announcement.link_url} className="text-gold hover:underline ml-2 shrink-0">{announcement.link_text ?? 'Learn more'} →</Link>
+          ) : (
+            !announcement && <Link to="/shop" className="text-gold hover:underline ml-2 shrink-0">Shop now →</Link>
+          )}
         </div>
       </div>
 

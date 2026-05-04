@@ -1,10 +1,22 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Wordmark } from './Wordmark'
 import { waLink } from '../lib/constants'
+import { useSubscribeNewsletter } from '../lib/mutations'
 
 export const Footer: React.FC = () => {
+  const [email, setEmail] = useState('')
+  const subscribe = useSubscribeNewsletter()
+
+  const onSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await subscribe.mutateAsync({ email })
+      setEmail('')
+    } catch { /* toast handled in mutation */ }
+  }
+
   return (
     <footer className="bg-burgundy text-offwhite/85 pt-20 pb-8 mt-20 relative overflow-hidden">
       {/* Brand pattern overlay */}
@@ -20,11 +32,38 @@ export const Footer: React.FC = () => {
 
       <div className="relative max-w-[1400px] mx-auto px-6 lg:px-10">
         {/* Top — big tagline */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <Wordmark size="md" color="gold" className="mx-auto" />
           <p className="font-display uppercase text-3xl sm:text-4xl text-gold mt-6 tracking-wider display-shadow">
             Your Hair's BFF
           </p>
+        </div>
+
+        {/* Newsletter */}
+        <div className="max-w-xl mx-auto text-center mb-16">
+          <div className="text-[11px] tracking-[0.3em] uppercase text-gold font-bold mb-3">— Join the list —</div>
+          <p className="text-sm text-offwhite/80 mb-5">
+            Drops, restocks, flash sales. No spam — just the good stuff.
+          </p>
+          <form onSubmit={onSubscribe} className="flex flex-col sm:flex-row gap-2">
+            <label className="sr-only" htmlFor="newsletter-email">Email</label>
+            <input
+              id="newsletter-email"
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="flex-1 px-5 py-3 rounded-full bg-offwhite/10 text-offwhite placeholder-offwhite/50 border border-offwhite/20 focus:border-gold outline-none"
+            />
+            <button
+              type="submit"
+              disabled={subscribe.isPending}
+              className="px-6 py-3 rounded-full bg-gold text-burgundy font-semibold uppercase text-xs tracking-[0.18em] hover:bg-gold-300 transition disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-burgundy"
+            >
+              {subscribe.isPending ? 'Joining…' : 'Subscribe'}
+            </button>
+          </form>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-12 mb-16">

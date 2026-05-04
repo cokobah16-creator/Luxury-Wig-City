@@ -2,8 +2,13 @@ import React, { useState } from 'react'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
 import { waLink } from '../lib/constants'
+import { useSeo } from '../lib/useSeo'
 
 const Contact: React.FC = () => {
+  useSeo({
+    title: 'Contact',
+    description: 'Get in touch with Luxury Wig City — book a consultation, ask a stylist, or reach our showroom team.'
+  })
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const handle = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [k]: e.target.value })

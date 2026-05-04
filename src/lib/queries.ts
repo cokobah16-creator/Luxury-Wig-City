@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
 import { useAuth } from '../contexts/AuthContext'
-import type { Product, CartItem, Order, Review, WishlistItem, UserWig } from './database.types'
+import type { Product, CartItem, Order, Review, WishlistItem, UserWig, Announcement } from './database.types'
 
 // ── Products ─────────────────────────────────────────────────────────────────
 
@@ -60,6 +60,42 @@ export function useProduct(id: string | undefined) {
   })
 }
 
+export function useCanReview(productId: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['can-review', user?.id, productId],
+    queryFn: async () => {
+      if (!user || !productId) return false
+      const { count, error } = await supabase
+        .from('orders').select('id', { count: 'exact', head: true })
+        .eq('customer_id', user.id)
+        .eq('payment_status', 'paid')
+        .contains('items', [{ product_id: productId }])
+      if (error) throw error
+      return (count ?? 0) > 0
+    },
+    enabled: !!user && !!productId
+  })
+}
+
+export function useMyReview(productId: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-review', user?.id, productId],
+    queryFn: async () => {
+      if (!user || !productId) return null
+      const { data, error } = await supabase
+        .from('reviews').select('*')
+        .eq('customer_id', user.id)
+        .eq('product_id', productId)
+        .maybeSingle()
+      if (error) throw error
+      return data as Review | null
+    },
+    enabled: !!user && !!productId
+  })
+}
+
 export function useProductReviews(productId: string | undefined) {
   return useQuery({
     queryKey: ['reviews', productId],
@@ -73,6 +109,23 @@ export function useProductReviews(productId: string | undefined) {
       return (data ?? []) as Review[]
     },
     enabled: !!productId
+  })
+}
+
+// ── Announcements ─────────────────────────────────────────────────────────────
+
+export function useActiveAnnouncements() {
+  return useQuery({
+    queryKey: ['announcements', 'active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements').select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as Announcement[]
+    },
+    staleTime: 5 * 60 * 1000
   })
 }
 
