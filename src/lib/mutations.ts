@@ -234,12 +234,25 @@ export function useGenerateTryOn() {
       const { data: pub } = supabase.storage.from('user-uploads').getPublicUrl(objectName)
       const sourceUrl = pub.publicUrl
 
-      // 2. Invoke edge function to run the AI generation
-      const { data, error } = await supabase.functions.invoke<{ result_id: string; generated_url: string }>(
-        'try-on-generate',
-        { body: { source_url: sourceUrl, product_id: productId } }
-      )
-      if (error) throw new Error(error.message)
+      // 2. Invoke edge function — 130 s client timeout (function itself aborts at 120 s)
+      const invokeController = new AbortController()
+      const invokeTimer = setTimeout(() => invokeController.abort(), 130_000)
+      let data: { result_id: string; generated_url: string } | null = null
+      let invokeError: Error | null = null
+      try {
+        const result = await supabase.functions.invoke<{ result_id: string; generated_url: string }>(
+          'try-on-generate',
+          { body: { source_url: sourceUrl, product_id: productId } }
+        )
+        if (result.error) invokeError = new Error(result.error.message)
+        else data = result.data
+      } catch (e) {
+        invokeError = e instanceof Error ? e : new Error('Try-on request failed')
+      } finally {
+        clearTimeout(invokeTimer)
+      }
+      if (invokeController.signal.aborted) throw new Error('The AI is taking too long — please try again in a moment.')
+      if (invokeError) throw invokeError
       if (!data) throw new Error('No response from try-on service')
       return { ...data, source_url: sourceUrl }
     },

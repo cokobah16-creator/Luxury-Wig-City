@@ -94,14 +94,29 @@ async function callFal(sourceUrl: string, prompt: string, referenceUrl: string |
   }
   if (referenceUrl) body.reference_image_url = referenceUrl
 
-  const res = await fetch(`https://fal.run/${FAL_MODEL}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Key ${FAL_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  })
+  // 120-second hard timeout so we fail fast before Supabase's 150s wall-clock limit
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 120_000)
+
+  let res: Response
+  try {
+    res = await fetch(`https://fal.run/${FAL_MODEL}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Key ${FAL_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    })
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('fal.ai took too long to respond (>120s). Try again — the model may be under load.')
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!res.ok) {
     const text = await res.text()
