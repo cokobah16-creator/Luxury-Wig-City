@@ -5,6 +5,7 @@ import { Wordmark } from '../components/Wordmark'
 import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
 import { useProducts } from '../lib/queries'
+import { waLink } from '../lib/constants'
 
 const categories = [
   { name: 'Bone Straight', count: 26, slug: 'Bone+Straight' },
@@ -240,7 +241,7 @@ const Home: React.FC = () => {
           <p className="font-serif italic text-burgundy/70 text-lg mb-8 max-w-xl mx-auto">
             Don't have time to browse? Send us your style preference, and a stylist will curate options for you within minutes.
           </p>
-          <Button href="https://wa.me/2348000000000?text=Hi%20Luxury%20Wig%20City" variant="primary" size="lg">
+          <Button href={waLink('Hi Luxury Wig City')} variant="primary" size="lg">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2 3 4.8 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4zM12 22c-1.7 0-3.4-.5-4.9-1.4L3 22l1.4-4.1C3.5 16.4 3 14.7 3 13c0-5 4-9 9-9s9 4 9 9-4 9-9 9z"/></svg>
             Chat with us now
           </Button>

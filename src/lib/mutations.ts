@@ -146,18 +146,22 @@ export function useCreateOrder() {
         is_platform_order: vendorKey === '__platform__'
       }))
 
-      const { error: orderErr } = await supabase.from('orders').insert(inserts)
+      const { data: created, error: orderErr } = await supabase
+        .from('orders').insert(inserts).select('id')
       if (orderErr) throw orderErr
 
       const { error: clearErr } = await supabase
         .from('cart_items').delete().eq('customer_id', user.id)
       if (clearErr) throw clearErr
+
+      return (created ?? []).map(o => o.id) as string[]
     },
-    onSuccess: () => {
+    onSuccess: (orderIds) => {
       qc.invalidateQueries({ queryKey: ['cart'] })
       qc.invalidateQueries({ queryKey: ['my-orders'] })
       toast.success('Order placed!')
-      navigate('/account?view=orders')
+      const firstId = orderIds[0]
+      navigate(firstId ? `/orders/${firstId}` : '/account?view=orders')
     },
     onError: (e: Error) => toast.error(e.message)
   })

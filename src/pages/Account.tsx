@@ -102,16 +102,23 @@ const Account: React.FC = () => {
                       cancelled:        'bg-red-100 text-red-800'
                     }
                     return (
-                      <div key={order.id} className="bg-pearl p-6 rounded-sm border border-burgundy/10">
+                      <Link
+                        key={order.id}
+                        to={`/orders/${order.id}`}
+                        className="block bg-pearl p-6 rounded-sm border border-burgundy/10 hover:border-burgundy/30 hover:shadow-soft transition"
+                      >
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                           <div>
                             <div className="text-xs text-burgundy/50 font-mono">#{order.id.slice(0, 8).toUpperCase()}</div>
                             <div className="font-display text-burgundy text-xl mt-1">{formatNaira(Number(order.total_amount))}</div>
                             <div className="text-xs text-burgundy/60 mt-1">{new Date(order.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                           </div>
-                          <span className={`text-[10px] px-2 py-1 rounded font-semibold uppercase tracking-wider ${statusColor[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                            {order.status.replace(/_/g, ' ')}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-[10px] px-2 py-1 rounded font-semibold uppercase tracking-wider ${statusColor[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                              {order.status.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-burgundy/50 text-xs">Track →</span>
+                          </div>
                         </div>
                         {Array.isArray(order.items) && order.items.length > 0 && (
                           <div className="mt-3 text-sm text-burgundy/70">
@@ -120,7 +127,7 @@ const Account: React.FC = () => {
                             ))}
                           </div>
                         )}
-                      </div>
+                      </Link>
                     )
                   })}
                 </div>

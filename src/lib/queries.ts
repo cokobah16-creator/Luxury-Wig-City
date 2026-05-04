@@ -97,6 +97,23 @@ export function useCart() {
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 
+export function useOrder(id: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['order', id],
+    queryFn: async () => {
+      if (!id) return null
+      const { data, error } = await supabase
+        .from('orders').select('*')
+        .eq('id', id)
+        .maybeSingle()
+      if (error) throw error
+      return data as Order | null
+    },
+    enabled: !!id && !!user
+  })
+}
+
 export function useMyOrders() {
   const { user } = useAuth()
   return useQuery({

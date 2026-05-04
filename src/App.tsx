@@ -11,6 +11,7 @@ import Location from './pages/Location'
 import Contact from './pages/Contact'
 import Account from './pages/Account'
 import Admin from './pages/Admin'
+import OrderTracking from './pages/OrderTracking'
 
 const App: React.FC = () => (
   <Routes>
@@ -24,6 +25,7 @@ const App: React.FC = () => (
       <Route path="/location" element={<Location />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/account" element={<Account />} />
+      <Route path="/orders/:id" element={<OrderTracking />} />
       <Route path="/admin" element={<Admin />} />
     </Route>
   </Routes>

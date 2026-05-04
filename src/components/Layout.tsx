@@ -2,6 +2,7 @@ import React from 'react'
 import { Outlet } from 'react-router-dom'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
+import { waLink } from '../lib/constants'
 
 export const Layout: React.FC = () => (
   <div className="min-h-screen flex flex-col">
@@ -13,7 +14,7 @@ export const Layout: React.FC = () => (
 
     {/* WhatsApp floating CTA */}
     <a
-      href="https://wa.me/2348000000000?text=Hi%20Luxury%20Wig%20City"
+      href={waLink('Hi Luxury Wig City')}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-burgundy hover:bg-burgundy-700 rounded-full shadow-luxe flex items-center justify-center transition group"

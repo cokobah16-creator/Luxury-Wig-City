@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
+import { waLink } from '../lib/constants'
 
 const Contact: React.FC = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
@@ -56,7 +57,7 @@ const Contact: React.FC = () => {
             <h2 className="font-display uppercase text-gold text-3xl mb-6">Other Ways to Reach Us</h2>
 
             <div className="space-y-6">
-              <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer" className="block p-4 bg-offwhite/5 hover:bg-offwhite/10 rounded-sm transition">
+              <a href={waLink()} target="_blank" rel="noopener noreferrer" className="block p-4 bg-offwhite/5 hover:bg-offwhite/10 rounded-sm transition">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-burgundy">
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2 3 4.8 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4zM12 22c-1.7 0-3.4-.5-4.9-1.4L3 22l1.4-4.1C3.5 16.4 3 14.7 3 13c0-5 4-9 9-9s9 4 9 9-4 9-9 9z"/></svg>

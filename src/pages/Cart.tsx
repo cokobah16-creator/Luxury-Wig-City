@@ -5,6 +5,7 @@ import { Button } from '../components/Button'
 import { useCart } from '../lib/queries'
 import { useUpdateCartQty, useRemoveCartItem } from '../lib/mutations'
 import { formatNaira } from '../lib/supabase'
+import { calcDelivery, waLink } from '../lib/constants'
 
 const Cart: React.FC = () => {
   const { data: items = [], isLoading } = useCart()
@@ -12,7 +13,7 @@ const Cart: React.FC = () => {
   const removeItem = useRemoveCartItem()
 
   const subtotal = items.reduce((s, i) => s + Number(i.price) * i.quantity, 0)
-  const delivery  = subtotal > 150000 ? 0 : 5000
+  const delivery  = calcDelivery(subtotal)
   const total     = subtotal + delivery
 
   if (isLoading) {
@@ -97,7 +98,7 @@ const Cart: React.FC = () => {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
               </Button>
               <div className="mt-4 text-center text-offwhite/70 text-xs">— or —</div>
-              <Button href="https://wa.me/2348000000000?text=I%20want%20to%20order%20from%20my%20cart" variant="secondary" size="lg" fullWidth className="mt-4 !text-gold !border-gold/40 hover:!bg-gold hover:!text-burgundy">
+              <Button href={waLink('I want to order from my cart')} variant="secondary" size="lg" fullWidth className="mt-4 !text-gold !border-gold/40 hover:!bg-gold hover:!text-burgundy">
                 Order via WhatsApp
               </Button>
             </div>

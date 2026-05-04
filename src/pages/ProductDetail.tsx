@@ -7,6 +7,7 @@ import { useProduct, useProductReviews, useProducts } from '../lib/queries'
 import { useAddToCart } from '../lib/mutations'
 import { useAuth } from '../contexts/AuthContext'
 import { formatNaira } from '../lib/supabase'
+import { waLink } from '../lib/constants'
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -212,7 +213,7 @@ const ProductDetail: React.FC = () => {
               Try This Wig (AI)
             </Button>
             <Button
-              href={`https://wa.me/2348000000000?text=Hi%20I'm%20interested%20in%20${encodeURIComponent(product.name)}`}
+              href={waLink(`Hi I'm interested in ${product.name}`)}
               variant="gold" size="lg" fullWidth className="sm:col-span-2"
             >
               Order via WhatsApp

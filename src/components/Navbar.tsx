@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Wordmark } from './Wordmark'
 import { useCart } from '../lib/queries'
@@ -15,6 +15,10 @@ const navLinks = [
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
   const { data: cartItems = [] } = useCart()
   const cartCount = cartItems.reduce((n, i) => n + i.quantity, 0)
 
@@ -23,6 +27,24 @@ export const Navbar: React.FC = () => {
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus()
+      const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSearchOpen(false) }
+      window.addEventListener('keydown', onKey)
+      return () => window.removeEventListener('keydown', onKey)
+    }
+  }, [searchOpen])
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = searchTerm.trim()
+    if (!q) return
+    navigate(`/shop?q=${encodeURIComponent(q)}`)
+    setSearchOpen(false)
+    setSearchTerm('')
+  }
 
   return (
     <>
@@ -64,7 +86,7 @@ export const Navbar: React.FC = () => {
 
           {/* Action icons */}
           <div className="flex items-center gap-1 lg:ml-4">
-            <button className="p-2.5 hover:bg-pearl rounded-full transition" aria-label="Search">
+            <button onClick={() => setSearchOpen(o => !o)} className="p-2.5 hover:bg-pearl rounded-full transition" aria-label="Search" aria-expanded={searchOpen}>
               <svg className="w-5 h-5 text-burgundy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
               </svg>
@@ -99,6 +121,32 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Search overlay */}
+        {searchOpen && (
+          <div className="border-t border-burgundy/10 bg-offwhite">
+            <form onSubmit={submitSearch} className="max-w-[1400px] mx-auto px-6 lg:px-10 py-5 flex items-center gap-3">
+              <svg className="w-5 h-5 text-burgundy/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Search wigs, textures, lengths…"
+                className="flex-1 bg-transparent text-base text-ink placeholder-burgundy/40 outline-none"
+                aria-label="Search products"
+              />
+              <button type="submit" className="text-xs tracking-[0.18em] uppercase font-semibold text-burgundy hover:text-burgundy-700 px-3 py-1.5">
+                Search
+              </button>
+              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search" className="p-1.5 text-burgundy/60 hover:text-burgundy">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Mobile drawer */}
         {mobileOpen && (

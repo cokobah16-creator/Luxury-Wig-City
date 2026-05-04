@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ProductCard } from '../components/ProductCard'
 import { useProducts, type ProductFilters } from '../lib/queries'
@@ -21,7 +21,12 @@ const Shop: React.FC = () => {
   const [selectedLengthBucket, setSelectedLengthBucket] = useState<string | null>(null)
   const [priceMax,             setPriceMax]             = useState(350000)
   const [sort,                 setSort]                 = useState<ProductFilters['sort']>('featured')
-  const [search,               setSearch]               = useState('')
+  const [search,               setSearch]               = useState(params.get('q') ?? '')
+
+  // Keep search in sync when navbar pushes a new ?q= (e.g. user searches again)
+  useEffect(() => {
+    setSearch(params.get('q') ?? '')
+  }, [params])
 
   const bucket = lengths.find(l => l.label === selectedLengthBucket)
 
@@ -47,6 +52,14 @@ const Shop: React.FC = () => {
     setParams({})
   }
 
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = search.trim()
+    const next = new URLSearchParams(params)
+    if (q) next.set('q', q); else next.delete('q')
+    setParams(next)
+  }
+
   return (
     <div className="bg-offwhite">
       <section className="bg-burgundy text-offwhite py-14 lg:py-20">
@@ -59,15 +72,16 @@ const Shop: React.FC = () => {
             {isLoading ? 'Loading…' : `${products.length} ${products.length === 1 ? 'wig' : 'wigs'} found · curated and verified`}
           </p>
           {/* Search */}
-          <div className="mt-6 max-w-md">
+          <form onSubmit={submitSearch} className="mt-6 max-w-md">
             <input
-              type="text"
+              type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search wigs…"
+              aria-label="Search products"
               className="w-full px-5 py-3 rounded-full bg-offwhite/10 text-offwhite placeholder-offwhite/50 border border-offwhite/20 focus:border-gold outline-none"
             />
-          </div>
+          </form>
         </div>
       </section>
 
