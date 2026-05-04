@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
 import { ProductCard } from '../components/ProductCard'
+import { Skeleton } from '../components/Skeleton'
+import { Lightbox } from '../components/Lightbox'
 import { useProduct, useProductReviews, useProducts } from '../lib/queries'
 import { useAddToCart } from '../lib/mutations'
 import { useAuth } from '../contexts/AuthContext'
@@ -24,6 +26,7 @@ const ProductDetail: React.FC = () => {
   const addToCart = useAddToCart()
 
   const [activeImage, setActiveImage] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [qty,         setQty]         = useState(1)
   const [length,      setLength]      = useState<string>('')
   const [capSize,     setCapSize]     = useState<string>('')
@@ -31,8 +34,29 @@ const ProductDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1400px] mx-auto px-6 py-32 flex items-center justify-center">
-        <Logo size={80} variant="mono-burgundy" className="opacity-30 animate-pulse" />
+      <div className="bg-offwhite">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-8">
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 grid lg:grid-cols-2 gap-12" aria-busy="true" aria-label="Loading product">
+          <div className="space-y-3">
+            <Skeleton className="aspect-square w-full" />
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="aspect-square" />)}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-12 w-3/4" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-40 mt-4" />
+            <Skeleton className="h-24 w-full mt-4" />
+            <div className="grid sm:grid-cols-2 gap-3 mt-6">
+              <Skeleton className="h-12 w-full" rounded="full" />
+              <Skeleton className="h-12 w-full" rounded="full" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -76,9 +100,23 @@ const ProductDetail: React.FC = () => {
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 grid lg:grid-cols-2 gap-12">
         {/* GALLERY */}
         <div>
-          <div className="relative aspect-square bg-burgundy rounded-sm overflow-hidden mb-4">
+          <button
+            type="button"
+            onClick={() => images.length > 0 && setLightboxOpen(true)}
+            disabled={images.length === 0}
+            aria-label={images.length > 0 ? 'Open image gallery' : undefined}
+            className="relative aspect-square bg-burgundy rounded-sm overflow-hidden mb-4 w-full block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+          >
             {images[activeImage] ? (
-              <img src={images[activeImage]} alt={product.name} className="w-full h-full object-cover" />
+              <img
+                src={images[activeImage]}
+                alt={product.name}
+                loading="eager"
+                decoding="async"
+                width={800}
+                height={800}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
             ) : (
               <>
                 <div className="absolute inset-0 opacity-30" style={{
@@ -92,15 +130,24 @@ const ProductDetail: React.FC = () => {
                 {product.badge}
               </div>
             )}
-          </div>
+            {images.length > 0 && (
+              <div className="absolute bottom-4 right-4 w-9 h-9 rounded-full bg-burgundy/80 text-gold flex items-center justify-center opacity-0 group-hover:opacity-100 transition" aria-hidden="true">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>
+              </div>
+            )}
+          </button>
 
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
               {images.slice(0, 4).map((src, i) => (
-                <button key={i} onClick={() => setActiveImage(i)}
-                  className={`aspect-square rounded-sm overflow-hidden border-2 ${activeImage === i ? 'border-gold' : 'border-transparent'}`}
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`Show image ${i + 1}`}
+                  aria-current={activeImage === i || undefined}
+                  className={`aspect-square rounded-sm overflow-hidden border-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 ${activeImage === i ? 'border-gold' : 'border-transparent hover:border-burgundy/30'}`}
                 >
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <img src={src} alt="" loading="lazy" decoding="async" width={200} height={200} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -256,6 +303,16 @@ const ProductDetail: React.FC = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {lightboxOpen && images.length > 0 && (
+        <Lightbox
+          images={images}
+          alt={product.name}
+          index={activeImage}
+          onClose={() => setLightboxOpen(false)}
+          onIndexChange={setActiveImage}
+        />
       )}
     </div>
   )

@@ -3,6 +3,7 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
+import { Skeleton } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { useOrder } from '../lib/queries'
 import { supabase, formatNaira } from '../lib/supabase'
@@ -52,8 +53,29 @@ const OrderTracking: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-offwhite min-h-screen flex items-center justify-center">
-        <Logo size={80} variant="mono-burgundy" className="opacity-30 animate-pulse" />
+      <div className="bg-offwhite min-h-screen">
+        <section className="bg-burgundy text-offwhite py-14">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-3">
+            <Skeleton className="h-3 w-40 bg-offwhite/20" />
+            <Skeleton className="h-16 w-64 bg-offwhite/20" />
+          </div>
+        </section>
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 grid lg:grid-cols-12 gap-10" aria-busy="true" aria-label="Loading order">
+          <div className="lg:col-span-8 space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex gap-5">
+                <Skeleton className="w-8 h-8" rounded="full" />
+                <div className="flex-1 space-y-2 pb-4">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <aside className="lg:col-span-4">
+            <Skeleton className="h-80 w-full" />
+          </aside>
+        </div>
       </div>
     )
   }

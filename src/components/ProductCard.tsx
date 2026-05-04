@@ -22,7 +22,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
     <Link to={`/shop/${product.id}`} className="group lift block">
       <div className="relative aspect-[3/4] bg-burgundy rounded-sm overflow-hidden">
         {product.images?.[0] ? (
-          <img src={product.images[0]} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            loading={index < 4 ? 'eager' : 'lazy'}
+            decoding="async"
+            width={400}
+            height={533}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
           <>
             <div
