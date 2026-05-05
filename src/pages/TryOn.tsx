@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/Button'
@@ -8,6 +8,7 @@ import { useProducts, useProduct, useMyTryOns } from '../lib/queries'
 import { useGenerateTryOn, useDeleteTryOn, useAddToCart } from '../lib/mutations'
 import { useAuth } from '../contexts/AuthContext'
 import { formatNaira } from '../lib/supabase'
+import { toast } from 'sonner'
 import { useSeo } from '../lib/useSeo'
 import type { Product } from '../lib/database.types'
 
@@ -58,18 +59,32 @@ const TryOn: React.FC = () => {
   const canSubmit = !!photo && !!wigToTry && consent && !generate.isPending
 
   // ── Handlers ──────────────────────────────────────────────────────────
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)) {
-      alert('HEIC photos aren\'t supported in this browser. Please use JPG, PNG or WebP — or change your iPhone setting: Settings → Camera → Formats → Most Compatible.')
-      e.target.value = ''
+
+    const isHeic = /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)
+
+    if (isHeic) {
+      // Convert HEIC → JPEG in the browser so Chrome can display it
+      // and fal.ai receives a universally-accepted format
+      try {
+        const heic2any = (await import('heic2any')).default
+        const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 }) as Blob
+        const converted = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' })
+        setPhoto(converted)
+        setPhotoPreview(URL.createObjectURL(converted))
+        setStep('wig')
+      } catch {
+        toast.error('Could not convert HEIC photo — please export it as JPG first.')
+      }
       return
     }
+
     setPhoto(file)
     setPhotoPreview(URL.createObjectURL(file))
     setStep('wig')
-  }
+  }, [])
 
   const reset = () => {
     if (photoPreview) URL.revokeObjectURL(photoPreview)
@@ -307,7 +322,7 @@ const PhotoUploader: React.FC<{
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         onChange={onPhoto}
         className="sr-only"
       />
